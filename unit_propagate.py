@@ -56,18 +56,21 @@ def simplify(formula, assignments):
 
 # TESTING
 if __name__ == "__main__":
-    unsat_formula = [[1],[-1],[3,4]]
-    print(unsat_formula)
-    unsat_formula, assignments = unit_propagate(unsat_formula)
-    print(unsat_formula)
+    # unsat_formula = [[1],[-1],[3,4]]
+    # print(unsat_formula)
+    # unsat_formula, assignments = unit_propagate(unsat_formula)
+    # print(unsat_formula)
 
-    sat_formula = [[1],[-1,2]]
-    print(sat_formula)
-    sat_formula, assignments = unit_propagate(sat_formula)
-    print(sat_formula)
+    # sat_formula = [[1],[-1,2]]
+    # print(sat_formula)
+    # sat_formula, assignments = unit_propagate(sat_formula)
+    # print(sat_formula)
 
-    formula_with_remains = [[1],[-1,2],[3,4]]
-    print(formula_with_remains)
-    formula_with_remains, assignments = unit_propagate(formula_with_remains)
-    print(formula_with_remains)
+    # formula_with_remains = [[1],[-1,2],[3,4]]
+    # print(formula_with_remains)
+    # formula_with_remains, assignments = unit_propagate(formula_with_remains)
+    # print(formula_with_remains)
+
+    formula = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
+    simplify(formula, {1:False, 2:False, 3:False})
 

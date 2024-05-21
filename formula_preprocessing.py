@@ -47,9 +47,15 @@ def pure_literal_elimination(formula, count_eliminations=False, return_assignmen
             return eliminated_formula, len(formula)-len(eliminated_formula)
         return eliminated_formula
     
-def get_unique_literals_in_formula(formula):
+def get_unique_literals_in_formula(formula, only_positive=False):
     flattened_formula = sum(formula, [])
-    return list(set(flattened_formula))
+    # return literals only in positive form
+    if only_positive: 
+        flattened_formula = map(abs, flattened_formula)
+        return list(set(flattened_formula))
+    # differentiate between positive and negative literals
+    else:
+        return list(set(flattened_formula))
 
 def subsumption(formula, count_subsumptions=False):
     if len(formula) == 0:
