@@ -1,8 +1,7 @@
-from unit_propagate import unit_propagate, simplify
+from unit_propagate_using_lists import unit_propagate, simplify
 from formula_preprocessing import get_unique_literals_in_formula
 import copy
 import random
-from collections import OrderedDict
 import time
 
 
@@ -10,23 +9,31 @@ def decide(assignments, literals):
     global decision_count
     decision_count += 1
     decision_variable = random.sample(literals,1)[0]
-    assignments[decision_variable] = random.choice([True,False])
     literals.remove(decision_variable)
+    decision_variable = decision_variable if random.choice([True,False]) else -decision_variable
+    assignments[-1].append(decision_variable)
 
 def analyze_conflict(assignments, decision_level):
-    learned_clause = [-literal if assignments[literal] else literal for literal in assignments]
+    learned_clause = [-decision_level_assignments[0] for decision_level_assignments in assignments[1:]]
     return learned_clause, decision_level-1
 
 def backtrack(decision_level, new_decision_level, assignments, literals):
     for _ in range(decision_level-new_decision_level):
-        literal = assignments.popitem()[0]
-        literals.append(literal)
+        decision_level_assignments = assignments.pop()
+        for literal in decision_level_assignments:
+            literals.append(abs(literal))
     return new_decision_level
 
-def propagate(formula, assignments):
+def propagate(formula, assignments, literals):
     global propagation_count
-    simplified_formula, extra_propagations = unit_propagate(simplify(copy.deepcopy(formula),assignments),return_assignments=False,count_propagations=True)
+    simplified_formula, unit_assignments, extra_propagations = unit_propagate(simplify(copy.deepcopy(formula),assignments),return_assignments=True,count_propagations=True)
     propagation_count += extra_propagations
+
+    # remember unit assignments
+    assignments[-1] = assignments[-1] + unit_assignments
+    for unit_assignment in unit_assignments:
+        literals.remove(abs(unit_assignment))
+
     return simplified_formula
 
 def apply_restart_policy():
@@ -57,17 +64,18 @@ def cdcl(formula):
 
     # init data structures
     decision_level = 0
-    assignments = OrderedDict()
+    assignments = [[]]
     literals = get_unique_literals_in_formula(formula, only_positive=True)
     learned_clauses = []
 
     # actual algorithm
     while len(literals) > 0:
         decision_level += 1
+        assignments.append([])
         # assign truth value to a literal
         decide(assignments,literals)
         # unit propagate
-        simplified_formula = propagate(formula, assignments)
+        simplified_formula = propagate(formula, assignments, literals)
 
         # if conflict occurs
         while [] in simplified_formula:
@@ -84,7 +92,7 @@ def cdcl(formula):
             # backtrack
             decision_level = backtrack(decision_level, new_decision_level, assignments, literals)
             # unit propagate
-            simplified_formula = propagate(formula, assignments)
+            simplified_formula = propagate(formula, assignments, literals)
 
         # restart occasionally
         apply_restart_policy()
@@ -92,7 +100,8 @@ def cdcl(formula):
     # return sat
     write_proof(learned_clauses, sat=True, formula=formula)
     runtime = time.time()-time_start
-    return "SAT", assignments, runtime, propagation_count, decision_count, conflict_count
+    flattened_assignments = sum(assignments,[])
+    return "SAT", flattened_assignments, runtime, propagation_count, decision_count, conflict_count
 
 
 if __name__ == "__main__":

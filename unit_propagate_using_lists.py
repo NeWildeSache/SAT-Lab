@@ -2,7 +2,7 @@ import copy
 
 def unit_propagate(formula, count_propagations=False, return_assignments=True):
     # preprocess
-    assignments = {}
+    assignments = []
     num_propagations = 0
     while True:
         # figure out unit clauses
@@ -12,7 +12,8 @@ def unit_propagate(formula, count_propagations=False, return_assignments=True):
         # derive assignments
         for unit in unit_clauses:
             literal = unit[0]
-            assignments[abs(literal)] = True if literal > 0 else False
+            if not (-literal in assignments or literal in assignments):
+                assignments.append(literal)
         # simplify formula with given assignments
         formula = simplify(formula, assignments)
         # count propagations
@@ -33,23 +34,20 @@ def unit_propagate(formula, count_propagations=False, return_assignments=True):
 # simplifies a formula given an assignment
 # also works if only one assignment was given (e.g. x=0 is explicitly stated but !x=1 isn't)
 def simplify(formula, assignments):
+    if len(assignments) != 0:
+        if type(assignments[0]) == list:
+            assignments = sum(assignments, [])
+    
     clauses_to_remove = []
     for i, clause in enumerate(formula):
         clause_copy = copy.deepcopy(clause)
         for literal in clause_copy:
-            if literal in assignments.keys():
-                if assignments[literal] == True:
-                    clauses_to_remove.append(i)
-                    continue
-                else:
-                    clause.remove(literal)
-            elif -literal in assignments.keys():
-                if assignments[-literal] == True:
-                    clause.remove(literal)
-                else:
-                    clauses_to_remove.append(i)
-                    continue
-
+            if literal in assignments:
+                clauses_to_remove.append(i)
+                continue
+            elif -literal in assignments:
+                clause.remove(literal)
+                
     formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
 
@@ -71,6 +69,6 @@ if __name__ == "__main__":
     formula_with_remains, assignments = unit_propagate(formula_with_remains)
     print(formula_with_remains)
 
-    formula = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
-    simplify(formula, {1:False, 2:False, 3:False})
+    formula_to_test_simplify = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
+    print(simplify(formula_to_test_simplify, [-1,-2,-3]))
 
