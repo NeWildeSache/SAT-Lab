@@ -17,21 +17,19 @@ def test_solver(n,c,k,solver,num_tests=50):
         sat = outputs[0]
         cadical = Cadical103()
         cadical.append_formula(formula)
+        cadical_sat = "SAT" if cadical.solve() else "UNSAT"
 
         print(f"Solver: {sat}")
-        print(f"Cadical: {"SAT" if cadical.solve() else "UNSAT"}")
+        print(f"Cadical: {cadical_sat}")
 
         if sat == "SAT":
             print(f"solver model: {outputs[1]}")
-        if cadical.solve():
+        if cadical_sat == "SAT":
             model = cadical.get_model()
             model = {abs(literal): True if literal > 0 else False for literal in model}
             print(f"cadical model: {model}")
 
-        if cadical.solve():
-            assert sat == "SAT"
-        else:
-            assert sat == "UNSAT"
+        assert sat == cadical_sat
 
 
 if __name__ == "__main__":
@@ -46,6 +44,9 @@ if __name__ == "__main__":
 
     test_solver(4,16,3,cdcl_5)
     test_solver(10,38,3,cdcl_5)
+
+    test_solver(4,16,3,cdcl_6)
+    test_solver(10,38,3,cdcl_6)
     
     print("All tests passed")
 

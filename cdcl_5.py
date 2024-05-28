@@ -1,5 +1,6 @@
 from unit_propagate_using_lists import unit_propagate, simplify
 from formula_preprocessing import get_unique_literals_in_formula
+from write_proof import write_proof
 import copy
 import random
 import time
@@ -26,7 +27,7 @@ def backtrack(decision_level, new_decision_level, assignments, literals):
 
 def propagate(formula, assignments, literals):
     global propagation_count
-    simplified_formula, unit_assignments, extra_propagations = unit_propagate(simplify(copy.deepcopy(formula),assignments),return_assignments=True,count_propagations=True)
+    simplified_formula, unit_assignments, extra_propagations = unit_propagate(simplify(formula,assignments),return_assignments=True,count_propagations=True)
     propagation_count += extra_propagations
 
     # remember unit assignments
@@ -39,23 +40,12 @@ def propagate(formula, assignments, literals):
 def apply_restart_policy():
     pass
 
-# writes proof in DRAT format
-def write_proof(learned_clauses, sat, formula):
-    num_literals = len(get_unique_literals_in_formula(formula, only_positive=True))
-    num_clauses = len(learned_clauses) + 1 if not sat else len(learned_clauses)
-
-    file_name = "proof.drat"
-    with open(file_name, "w") as file:
-        file.write("p cnf " + str(num_literals) + " " + str(num_clauses) + "\n")
-        for learned_clause in learned_clauses:
-            file.write(" ".join(map(str,learned_clause)) + " 0\n")
-        if not sat:
-            file.write("0\n")
-
 
 def cdcl(formula):
     # init statistics
     time_start = time.time()
+    original_formula = copy.deepcopy(formula)
+    formula = copy.deepcopy(formula) # makes sure that input formula isn't changed outside of the algorithm
     global propagation_count
     propagation_count = 0
     global decision_count
@@ -65,7 +55,7 @@ def cdcl(formula):
     # init data structures
     decision_level = 0
     assignments = [[]]
-    literals = get_unique_literals_in_formula(formula, only_positive=True)
+    literals = get_unique_literals_in_formula(original_formula, only_positive=True)
     learned_clauses = []
 
     # actual algorithm
@@ -75,10 +65,10 @@ def cdcl(formula):
         # assign truth value to a literal
         decide(assignments,literals)
         # unit propagate
-        simplified_formula = propagate(formula, assignments, literals)
+        formula = propagate(formula, assignments, literals)
 
         # if conflict occurs
-        while [] in simplified_formula:
+        while [] in formula:
             conflict_count += 1
             # if conflict occurs at the root level -> unsat
             if decision_level == 0:
@@ -88,11 +78,11 @@ def cdcl(formula):
             # learn clause and figure out backtracking level
             learned_clause, new_decision_level = analyze_conflict(assignments, decision_level)
             learned_clauses.append(learned_clause)
-            formula.append(learned_clause)
+            original_formula.append(learned_clause)
             # backtrack
             decision_level = backtrack(decision_level, new_decision_level, assignments, literals)
             # unit propagate
-            simplified_formula = propagate(formula, assignments, literals)
+            formula = propagate(copy.deepcopy(original_formula), assignments, literals)
 
         # restart occasionally
         apply_restart_policy()
@@ -105,5 +95,5 @@ def cdcl(formula):
 
 
 if __name__ == "__main__":
-    formula = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
+    formula = [[-1, -2, 3], [1, -2, 3], [-1, 2, 3], [1, -2, -3]]
     print(cdcl(formula))

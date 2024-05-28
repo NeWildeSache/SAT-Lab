@@ -1,16 +1,19 @@
 import copy
 
-def unit_propagate(formula, count_propagations=False, return_assignments=True):
+def unit_propagate(formula, count_propagations=False, return_assignments=False, return_unit_clause_indices=False):
     # preprocess
     assignments = []
     num_propagations = 0
+    unit_clause_indices = []
     while True:
+        unit_clause_indices.append([])
         # figure out unit clauses
-        unit_clauses = [c for c in formula if len(c) == 1]
+        unit_clauses = [[c, i] for i, c in enumerate(formula) if len(c) == 1]
         # remember information for stopping 
-        old_len = len(formula)
+        old_formula = copy.deepcopy(formula)
         # derive assignments
-        for unit in unit_clauses:
+        for unit, index in unit_clauses:
+            unit_clause_indices[-1].append(index)
             literal = unit[0]
             if not (-literal in assignments or literal in assignments):
                 assignments.append(literal)
@@ -19,17 +22,19 @@ def unit_propagate(formula, count_propagations=False, return_assignments=True):
         # count propagations
         num_propagations += 1
         # stop if nothing happens or unsat
-        if old_len == len(formula) or [] in formula:
+        if old_formula == formula or [] in formula:
             break
     # return what's needed
-    if count_propagations:
-        if return_assignments:
-            return formula, assignments, num_propagations
-        return formula, num_propagations
-    else:
-        if return_assignments:
-            return formula, assignments
+    if not return_assignments and not count_propagations and not return_unit_clause_indices:
         return formula
+    return_statement = [formula]
+    if return_assignments:
+        return_statement.append(assignments)
+    if count_propagations:
+        return_statement.append(num_propagations)
+    if return_unit_clause_indices:
+        return_statement.append(unit_clause_indices)
+    return return_statement
 
 # simplifies a formula given an assignment
 # also works if only one assignment was given (e.g. x=0 is explicitly stated but !x=1 isn't)
@@ -48,6 +53,7 @@ def simplify(formula, assignments):
             elif -literal in assignments:
                 clause.remove(literal)
                 
+    # formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
     formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
 
