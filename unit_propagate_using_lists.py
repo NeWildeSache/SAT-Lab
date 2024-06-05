@@ -6,14 +6,13 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
     num_propagations = 0
     unit_clause_indices = []
     while True:
-        unit_clause_indices.append([])
         # figure out unit clauses
         unit_clauses = [[c, i] for i, c in enumerate(formula) if len(c) == 1]
         # remember information for stopping 
         old_formula = copy.deepcopy(formula)
         # derive assignments
         for unit, index in unit_clauses:
-            unit_clause_indices[-1].append(index)
+            unit_clause_indices.append(index)
             literal = unit[0]
             if not (-literal in assignments or literal in assignments):
                 assignments.append(literal)
@@ -45,6 +44,8 @@ def simplify(formula, assignments):
     
     clauses_to_remove = []
     for i, clause in enumerate(formula):
+        if type(clause) == str:
+            continue
         clause_copy = copy.deepcopy(clause)
         for literal in clause_copy:
             if literal in assignments:
@@ -53,8 +54,8 @@ def simplify(formula, assignments):
             elif -literal in assignments:
                 clause.remove(literal)
                 
-    # formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
-    formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
+    formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
+    # formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
 
 

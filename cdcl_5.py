@@ -56,6 +56,7 @@ def cdcl(formula):
     decision_level = 0
     assignments = [[]]
     literals = get_unique_literals_in_formula(original_formula, only_positive=True)
+    num_literals = len(literals)
     learned_clauses = []
 
     # actual algorithm
@@ -72,7 +73,7 @@ def cdcl(formula):
             conflict_count += 1
             # if conflict occurs at the root level -> unsat
             if decision_level == 0:
-                write_proof(learned_clauses, sat=False, formula=formula)
+                write_proof(learned_clauses, sat=False, num_literals=num_literals)
                 runtime = time.time()-time_start
                 return "UNSAT", runtime, propagation_count, decision_count, conflict_count
             # learn clause and figure out backtracking level
@@ -88,7 +89,7 @@ def cdcl(formula):
         apply_restart_policy()
 
     # return sat
-    write_proof(learned_clauses, sat=True, formula=formula)
+    write_proof(learned_clauses, sat=True, num_literals=num_literals)
     runtime = time.time()-time_start
     flattened_assignments = sum(assignments,[])
     return "SAT", flattened_assignments, runtime, propagation_count, decision_count, conflict_count

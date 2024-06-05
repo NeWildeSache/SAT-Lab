@@ -1,8 +1,5 @@
-from formula_preprocessing import get_unique_literals_in_formula
-
 # writes proof in DRAT format
-def write_proof(learned_clauses, sat, formula):
-    num_literals = len(get_unique_literals_in_formula(formula, only_positive=True))
+def write_proof(learned_clauses, sat, num_literals):
     num_clauses = len(learned_clauses) + 1 if not sat else len(learned_clauses)
 
     file_name = "proof.drat"
