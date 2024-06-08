@@ -3,8 +3,8 @@ from davis_putnam import davis_putnam
 from pysat.solvers import Cadical103
 from random_cnf import random_cnf
 from dpll import dpll
-from cdcl_6 import cdcl as cdcl_6
-from cdcl_5 import cdcl as cdcl_5
+from cdcl import cdcl as cdcl
+from cdcl_6 import cdcl_clause_learning as cdcl_clause_learning
 
 def test_solver(n,c,k,solver,num_tests=50):
     for _ in range(num_tests):
@@ -13,7 +13,10 @@ def test_solver(n,c,k,solver,num_tests=50):
         formula = random_cnf(n,c,k)
         print(f"Formula: {formula}")
 
-        outputs = solver(formula)
+        if isinstance(solver,type): # check if solver is a class
+            outputs = solver().solve(formula)
+        else: 
+            outputs = solver(formula)
         sat = outputs[0]
         cadical = Cadical103()
         cadical.append_formula(formula)
@@ -42,11 +45,11 @@ if __name__ == "__main__":
     # test_solver(4,16,3,dpll)
     # test_solver(10,38,3,dpll)
 
-    test_solver(4,16,3,cdcl_5)
-    test_solver(10,38,3,cdcl_5)
+    # test_solver(4,16,3,cdcl)
+    # test_solver(10,38,3,cdcl)
 
-    test_solver(4,16,3,cdcl_6)
-    test_solver(10,38,3,cdcl_6)
+    test_solver(4,16,3,cdcl_clause_learning)
+    test_solver(10,38,3,cdcl_clause_learning)
     
     print("All tests passed")
 
