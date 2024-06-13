@@ -61,14 +61,16 @@ class cdcl:
         flattened_assignments = sum(self.assignments,[])
         return "SAT", flattened_assignments, runtime, self.propagation_count, self.decision_count, self.conflict_count
 
+    def get_decision_variable(self):
+        decision_variable = random.sample(self.unassigned_variables,1)[0]
+        return decision_variable if random.choice([True,False]) else -decision_variable
 
     def decide(self):
         self.decision_count += 1
-        decision_variable = random.sample(self.unassigned_variables,1)[0]
-        self.unassigned_variables.remove(decision_variable)
-        decision_variable = decision_variable if random.choice([True,False]) else -decision_variable
+        decision_variable = self.get_decision_variable()
+        self.unassigned_variables.remove(abs(decision_variable))
         self.assignments[-1].append(decision_variable)
-
+        return decision_variable
 
     def analyze_conflict(self):
         learned_clause = [-decision_level_assignments[0] for decision_level_assignments in self.assignments[1:]]
@@ -84,15 +86,16 @@ class cdcl:
                 self.unassigned_variables.append(abs(literal))
         self.decision_level = new_decision_level
 
+    def remember_unit_assignments(self, unit_assignments):
+        self.assignments[-1] = self.assignments[-1] + unit_assignments
+        for unit_assignment in unit_assignments:
+            self.unassigned_variables.remove(abs(unit_assignment))
 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True)
         self.propagation_count += extra_propagations
 
-        # remember unit assignments
-        self.assignments[-1] = self.assignments[-1] + unit_assignments
-        for unit_assignment in unit_assignments:
-            self.unassigned_variables.remove(abs(unit_assignment))
+        self.remember_unit_assignments(unit_assignments)
 
 
     def apply_restart_policy(self):

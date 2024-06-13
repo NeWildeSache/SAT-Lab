@@ -1,10 +1,10 @@
 import copy
 
-def unit_propagate(formula, count_propagations=False, return_assignments=False, return_unit_clause_indices=False):
+def unit_propagate(formula, count_propagations=False, return_assignments=False, return_unit_clause_indices_and_respective_units=False):
     # preprocess
     assignments = []
     num_propagations = 0
-    unit_clause_indices = []
+    unit_clause_indices_and_respective_units = []
     while True:
         # figure out unit clauses
         unit_clauses = [[c, i] for i, c in enumerate(formula) if len(c) == 1]
@@ -12,8 +12,8 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
         old_formula = copy.deepcopy(formula)
         # derive assignments
         for unit, index in unit_clauses:
-            unit_clause_indices.append(index)
             literal = unit[0]
+            unit_clause_indices_and_respective_units.append([index, literal])
             if not (-literal in assignments or literal in assignments):
                 assignments.append(literal)
         # simplify formula with given assignments
@@ -24,15 +24,15 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
         if old_formula == formula or [] in formula:
             break
     # return what's needed
-    if not return_assignments and not count_propagations and not return_unit_clause_indices:
+    if not return_assignments and not count_propagations and not return_unit_clause_indices_and_respective_units:
         return formula
     return_statement = [formula]
     if return_assignments:
         return_statement.append(assignments)
     if count_propagations:
         return_statement.append(num_propagations)
-    if return_unit_clause_indices:
-        return_statement.append(unit_clause_indices)
+    if return_unit_clause_indices_and_respective_units:
+        return_statement.append(unit_clause_indices_and_respective_units)
     return return_statement
 
 # simplifies a formula given an assignment
@@ -43,19 +43,16 @@ def simplify(formula, assignments):
             assignments = sum(assignments, [])
     
     clauses_to_remove = []
-    for i, clause in enumerate(formula):
-        if type(clause) == str:
-            continue
-        clause_copy = copy.deepcopy(clause)
-        for literal in clause_copy:
-            if literal in assignments:
-                clauses_to_remove.append(i)
+    for literal in assignments:
+        for i, clause in enumerate(formula):
+            if type(clause) == str:
                 continue
-            elif -literal in assignments:
-                clause.remove(literal)
+            if literal in clause:
+                clauses_to_remove.append(i)
+            elif -literal in clause:
+                clause.remove(-literal)
                 
     formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
-    # formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
 
 

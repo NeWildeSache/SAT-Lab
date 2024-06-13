@@ -15,7 +15,10 @@ def dpll(formula, use_pure_literal_elimination=True):
     assignments = dpll_step(formula, assignments={}, use_pure_literal_elimination=use_pure_literal_elimination)
     time_end = time.time()
     # return
-    return sat, assignments, time_end-time_start, propagation_count, pure_literal_elimination_count, decision_count
+    if sat == "SAT":
+        return sat, assignments, time_end-time_start, propagation_count, pure_literal_elimination_count, decision_count
+    else:
+        return sat, time_end-time_start, propagation_count, pure_literal_elimination_count, decision_count
     
 
 # does the actual dpll algorithm

@@ -1,59 +1,19 @@
 from unit_propagate_using_lists import unit_propagate, simplify
-import copy
-import time
 from cdcl import cdcl
 import networkx as nx
-import random
+
 
 class cdcl_clause_learning(cdcl):
     def __init__(self) -> None:
-        pass
+        super().__init__()
 
     def reset_variables(self, formula):
         super().reset_variables(formula)
         self.conflict_graph = nx.DiGraph()
-    
-    def solve(self, formula):
-        time_start = time.time()
-        self.reset_variables(formula)
 
-        # actual algorithm
-        while len(self.unassigned_variables) > 0:
-            self.decision_level += 1
-            self.assignments.append([])
-            # assign truth value to a literal
-            self.decide()
-            # unit propagate
-            self.propagate(self.formula)
-
-            # if conflict occurs
-            while [] in self.formula:
-                self.conflict_count += 1
-                # if conflict occurs at the root level -> unsat
-                if self.decision_level == 0:
-                    self.write_proof(sat=False)
-                    runtime = time.time()-time_start
-                    return "UNSAT", runtime, self.propagation_count, self.decision_count, self.conflict_count
-                # learn clause and figure out backtracking level
-                new_decision_level = self.analyze_conflict()
-                # backtrack
-                self.backtrack(new_decision_level)
-                # unit propagate
-                self.propagate(copy.deepcopy(self.known_clauses))
-
-            # restart occasionally
-            self.apply_restart_policy()
-
-        # return sat
-        self.write_proof(sat=True)
-        runtime = time.time()-time_start
-        flattened_assignments = sum(self.assignments,[])
-        return "SAT", flattened_assignments, runtime, self.propagation_count, self.decision_count, self.conflict_count
-
-
-    def update_conflict_graph(self, unit_clause_indices, unit_assignments):
+    def update_conflict_graph(self, unit_clause_indices_and_respective_units):
         # save implications in conflict graph
-        for unit_clause_index, unit_assignment in zip(unit_clause_indices, unit_assignments):
+        for unit_clause_index, unit_assignment in unit_clause_indices_and_respective_units:
             clause_that_became_unit = self.known_clauses[unit_clause_index]
             implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
             for literal in implicating_literals:
@@ -66,18 +26,13 @@ class cdcl_clause_learning(cdcl):
             for literal in conflict_clause:
                 self.conflict_graph.add_edge(-literal,"conflict")
 
-
     def propagate(self, formula):
-        self.formula, unit_assignments, extra_propagations, unit_clause_indices = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices=True)
+        self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
         self.propagation_count += extra_propagations
 
-        self.update_conflict_graph(unit_clause_indices, unit_assignments)
+        self.update_conflict_graph(unit_clause_indices_and_respective_units)
 
-        # remember unit assignments
-        self.assignments[-1] = self.assignments[-1] + unit_assignments
-        for unit_assignment in unit_assignments:
-            self.unassigned_variables.remove(abs(unit_assignment))
-
+        self.remember_unit_assignments(unit_assignments)
 
     def analyze_conflict(self):
         # get learned clause using first uip
@@ -116,9 +71,3 @@ class cdcl_clause_learning(cdcl):
         self.decision_level = new_decision_level
 
 
-
-if __name__ == "__main__":
-    from random_cnf import random_cnf
-    formula = [[-2, 3, -4], [1, -2, -4], [1, 2, 3], [-1, 2, -4], [1, -2, 4], [-1, 2, 3], [-1, -2, -4], [1, -2, -3], [1, -3, -4], [-1, -2, 3], [1, 2, -4], [1, -3, 4], [-1, -3, 4], [-2, -3, -4], [-2, -3, 4], [-1, 3, -4]]
-    print(cdcl_clause_learning().solve(formula))
-    print("All tests passed")
