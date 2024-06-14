@@ -54,16 +54,16 @@ if __name__ == "__main__":
     test_solver(3,5,2,solve_2_sat, return_average_time=False)
     test_solver(100,100,2,solve_2_sat, return_average_time=False)
 
-    solvers = [davis_putnam,dpll,cdcl,cdcl_clause_learning,cdcl_decision_heuristics_and_restarts]
-    solvers = [cdcl_clause_learning]
+    solvers = [cdcl,cdcl_clause_learning]
+    # solvers = [cdcl_clause_learning]
     print_progress = False
     # print_progress = True
     # solvers = [cdcl_watched_literals]
     # solvers = [cdcl_decision_heuristics_and_restarts]
-    for n,c,k in [(4,16,3),(10,38,3),(7,120,4),(20,400,4)]:
+    for n,c,k in [(4,16,3),(10,38,3),(20,76,3),(30,30*3.8,3),(100,380,3)]:
         times = []
         for solver in solvers:
-            times.append(test_solver(n,c,k,solver,print_progress=print_progress))
+            times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=10))
 
         print(f"Times for {n},{c},{k}")
         for i,time in enumerate(times):

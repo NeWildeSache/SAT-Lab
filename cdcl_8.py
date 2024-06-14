@@ -42,12 +42,12 @@ class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
     def analyze_conflict(self):
         # get learned clause using first uip
         last_decision_literal = self.assignments[-1][0]
-        first_uip = nx.immediate_dominators(self.conflict_graph, last_decision_literal)["conflict"]
+        first_uip = nx.immediate_dominators(self.conflict_graph_predecessors, last_decision_literal)["conflict"]
         last_decision_level_literals = self.assignments[-1]
-        descendants_of_uip = list(nx.descendants(self.conflict_graph, first_uip))
+        descendants_of_uip = list(nx.descendants(self.conflict_graph_predecessors, first_uip))
         predecessors_of_uip_descendants = set()
         for descendant in descendants_of_uip:
-            predecessors = list(self.conflict_graph.predecessors(descendant))
+            predecessors = list(self.conflict_graph_predecessors.predecessors(descendant))
             for predecessor in predecessors:
                 predecessors_of_uip_descendants.add(predecessor)
         predecessors_of_uip_descendants = list(predecessors_of_uip_descendants)

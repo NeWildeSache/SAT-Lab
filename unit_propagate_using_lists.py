@@ -13,8 +13,8 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
         # derive assignments
         for unit, index in unit_clauses:
             literal = unit[0]
-            unit_clause_indices_and_respective_units.append([index, literal])
             if not (-literal in assignments or literal in assignments):
+                unit_clause_indices_and_respective_units.append([index, literal])
                 assignments.append(literal)
         # simplify formula with given assignments
         formula = simplify(formula, assignments)

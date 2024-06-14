@@ -78,7 +78,6 @@ class cdcl:
         self.known_clauses.append(learned_clause)
         return self.decision_level-1
 
-
     def backtrack(self, new_decision_level):
         for _ in range(self.decision_level-new_decision_level):
             decision_level_assignments = self.assignments.pop()
@@ -89,7 +88,8 @@ class cdcl:
     def remember_unit_assignments(self, unit_assignments):
         self.assignments[-1] = self.assignments[-1] + unit_assignments
         for unit_assignment in unit_assignments:
-            self.unassigned_variables.remove(abs(unit_assignment))
+            try: self.unassigned_variables.remove(abs(unit_assignment))
+            except: pass
 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True)

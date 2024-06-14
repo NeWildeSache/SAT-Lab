@@ -1,7 +1,5 @@
 from unit_propagate_using_lists import unit_propagate, simplify
 from cdcl import cdcl
-import networkx as nx
-
 
 class cdcl_clause_learning(cdcl):
     def __init__(self) -> None:
@@ -9,50 +7,69 @@ class cdcl_clause_learning(cdcl):
 
     def reset_variables(self, formula):
         super().reset_variables(formula)
-        self.conflict_graph = nx.DiGraph()
+        self.immediate_predecessors = {}
+        for literal in self.unassigned_variables:
+            self.immediate_predecessors[literal] = []
+            self.immediate_predecessors[-literal] = []
+        self.immediate_predecessors["conflict"] = []
+
 
     def update_conflict_graph(self, unit_clause_indices_and_respective_units):
         # save implications in conflict graph
         for unit_clause_index, unit_assignment in unit_clause_indices_and_respective_units:
             clause_that_became_unit = self.known_clauses[unit_clause_index]
-            implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
-            for literal in implicating_literals:
-                self.conflict_graph.add_edge(literal,unit_assignment)
+            # implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
+            # self.immediate_predecessors[unit_assignment] = implicating_literals
+            for literal in clause_that_became_unit:
+                if literal != unit_assignment:
+                    self.immediate_predecessors[unit_assignment].append(-literal)
 
         # save possible conflicts in conflict graph
         if [] in self.formula:
-            conflict_clause_index = self.formula.index([])
-            conflict_clause = self.known_clauses[conflict_clause_index]
+            conflict_clause = self.known_clauses[self.formula.index([])]
+            # implicating_literals = [-literal for literal in conflict_clause]
+            # self.immediate_predecessors["conflict"] = implicating_literals
             for literal in conflict_clause:
-                self.conflict_graph.add_edge(-literal,"conflict")
+                self.immediate_predecessors["conflict"].append(-literal)
+
 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
         self.propagation_count += extra_propagations
 
-        self.update_conflict_graph(unit_clause_indices_and_respective_units)
-
         self.remember_unit_assignments(unit_assignments)
 
+        self.update_conflict_graph(unit_clause_indices_and_respective_units)
+        
+
     def analyze_conflict(self):
-        # get learned clause using first uip
-        last_decision_literal = self.assignments[-1][0]
-        first_uip = nx.immediate_dominators(self.conflict_graph, last_decision_literal)["conflict"]
-        last_decision_level_literals = self.assignments[-1]
-        descendants_of_uip = list(nx.descendants(self.conflict_graph, first_uip))
-        predecessors_of_uip_descendants = set()
-        for descendant in descendants_of_uip:
-            predecessors = list(self.conflict_graph.predecessors(descendant))
-            for predecessor in predecessors:
-                predecessors_of_uip_descendants.add(predecessor)
-        predecessors_of_uip_descendants = list(predecessors_of_uip_descendants)
-        learned_clause = [-literal for literal in predecessors_of_uip_descendants if literal not in last_decision_level_literals]
-        learned_clause.append(-first_uip)
+        # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
+        learned_clause = []
+        stack = sum(self.assignments, [])
+        p = "conflict"
+        c = 0
+        seen = set()
+        
+        while True:
+            for q in self.immediate_predecessors[p]:
+                if q not in seen:
+                    seen.add(q)
+                    if q in self.assignments[-1]:
+                        c += 1
+                    else:
+                        learned_clause.append(-q)
+            while True:
+                p = stack.pop()
+                if p in seen: break
+            c -= 1
+            if c == 0: break
+
+        learned_clause.append(-p)
         
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
 
-        # get new decision level
+        # get new decision level -> second highest decision level in learned clause
         new_decision_level = 0
         for i, decision_level_assignments in enumerate(reversed(self.assignments[:-1])):
             intersection = [item for item in decision_level_assignments if item in learned_clause]
@@ -62,11 +79,12 @@ class cdcl_clause_learning(cdcl):
         return new_decision_level
     
     def backtrack(self, new_decision_level):
+        self.conflict_clause = None
         for _ in range(self.decision_level-new_decision_level):
             decision_level_assignments = self.assignments.pop()
             for literal in decision_level_assignments:
-                try: self.conflict_graph.remove_node(literal)
-                except: pass
+                self.immediate_predecessors[literal] = []
+                self.immediate_predecessors["conflict"] = []
                 self.unassigned_variables.append(abs(literal))
         self.decision_level = new_decision_level
 
