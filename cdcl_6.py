@@ -8,29 +8,20 @@ class cdcl_clause_learning(cdcl):
     def reset_variables(self, formula):
         super().reset_variables(formula)
         self.immediate_predecessors = {}
-        for literal in self.unassigned_variables:
-            self.immediate_predecessors[literal] = []
-            self.immediate_predecessors[-literal] = []
-        self.immediate_predecessors["conflict"] = []
 
 
     def update_conflict_graph(self, unit_clause_indices_and_respective_units):
-        # save implications in conflict graph
+        # save implications in conflict graph (overwrites old values so no backtrack needed)
         for unit_clause_index, unit_assignment in unit_clause_indices_and_respective_units:
             clause_that_became_unit = self.known_clauses[unit_clause_index]
-            # implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
-            # self.immediate_predecessors[unit_assignment] = implicating_literals
-            for literal in clause_that_became_unit:
-                if literal != unit_assignment:
-                    self.immediate_predecessors[unit_assignment].append(-literal)
+            implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
+            self.immediate_predecessors[unit_assignment] = implicating_literals
 
-        # save possible conflicts in conflict graph
+        # save possible conflicts in conflict graph (overwrites old values so no backtrack needed)
         if [] in self.formula:
             conflict_clause = self.known_clauses[self.formula.index([])]
-            # implicating_literals = [-literal for literal in conflict_clause]
-            # self.immediate_predecessors["conflict"] = implicating_literals
-            for literal in conflict_clause:
-                self.immediate_predecessors["conflict"].append(-literal)
+            implicating_literals = [-literal for literal in conflict_clause]
+            self.immediate_predecessors["conflict"] = implicating_literals
 
 
     def propagate(self, formula):
@@ -49,6 +40,7 @@ class cdcl_clause_learning(cdcl):
         p = "conflict"
         c = 0
         seen = set()
+        new_decision_level = 0
         
         while True:
             for q in self.immediate_predecessors[p]:
@@ -57,6 +49,9 @@ class cdcl_clause_learning(cdcl):
                     if q in self.assignments[-1]:
                         c += 1
                     else:
+                        decision_level = self.decision_level_per_literal[q]
+                        if decision_level > new_decision_level:
+                            new_decision_level = decision_level
                         learned_clause.append(-q)
             while True:
                 p = stack.pop()
@@ -69,23 +64,6 @@ class cdcl_clause_learning(cdcl):
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
 
-        # get new decision level -> second highest decision level in learned clause
-        new_decision_level = 0
-        for i, decision_level_assignments in enumerate(reversed(self.assignments[:-1])):
-            intersection = [item for item in decision_level_assignments if item in learned_clause]
-            if len(intersection) > 0:
-                new_decision_level = len(self.assignments)-(i+2)
-
         return new_decision_level
-    
-    def backtrack(self, new_decision_level):
-        self.conflict_clause = None
-        for _ in range(self.decision_level-new_decision_level):
-            decision_level_assignments = self.assignments.pop()
-            for literal in decision_level_assignments:
-                self.immediate_predecessors[literal] = []
-                self.immediate_predecessors["conflict"] = []
-                self.unassigned_variables.append(abs(literal))
-        self.decision_level = new_decision_level
 
 

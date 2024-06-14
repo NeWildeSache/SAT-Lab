@@ -22,6 +22,7 @@ class cdcl:
         self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True)
         self.num_literals = len(self.unassigned_variables)
         self.learned_clauses = []
+        self.decision_level_per_literal = {}
 
 
     def solve(self, formula):
@@ -70,6 +71,7 @@ class cdcl:
         decision_variable = self.get_decision_variable()
         self.unassigned_variables.remove(abs(decision_variable))
         self.assignments[-1].append(decision_variable)
+        self.decision_level_per_literal[decision_variable] = len(self.assignments)-1
         return decision_variable
 
     def analyze_conflict(self):
@@ -88,6 +90,7 @@ class cdcl:
     def remember_unit_assignments(self, unit_assignments):
         self.assignments[-1] = self.assignments[-1] + unit_assignments
         for unit_assignment in unit_assignments:
+            self.decision_level_per_literal[unit_assignment] = len(self.assignments)-1
             try: self.unassigned_variables.remove(abs(unit_assignment))
             except: pass
 

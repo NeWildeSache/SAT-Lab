@@ -60,10 +60,10 @@ if __name__ == "__main__":
     # print_progress = True
     # solvers = [cdcl_watched_literals]
     # solvers = [cdcl_decision_heuristics_and_restarts]
-    for n,c,k in [(4,16,3),(10,38,3),(20,76,3),(30,30*3.8,3),(100,380,3)]:
+    for n,c,k in [(4,16,3),(20,76,3),(30,3.8*30,3)]:
         times = []
         for solver in solvers:
-            times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=10))
+            times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=100))
 
         print(f"Times for {n},{c},{k}")
         for i,time in enumerate(times):
