@@ -85,12 +85,15 @@ class cdcl:
         self.assignments[-1].append(decision_variable)
         self.decision_level_per_assigned_literal[decision_variable] = len(self.assignments)-1
         return decision_variable
-
-    def analyze_conflict(self):
-        learned_clause = [-decision_level_assignments[0] for decision_level_assignments in self.assignments[1:]]
+    
+    def remember_learned_clause(self,learned_clause):
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
         self.learned_clause_count += 1
+
+    def analyze_conflict(self):
+        learned_clause = [-decision_level_assignments[0] for decision_level_assignments in self.assignments[1:]]
+        self.remember_learned_clause(learned_clause)
         return self.decision_level-1
 
     def backtrack(self, new_decision_level):

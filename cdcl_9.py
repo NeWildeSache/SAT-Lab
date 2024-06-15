@@ -5,7 +5,7 @@ import time
 class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restarts):
     def __init__(self) -> None:
         super().__init__()
-        self.max_lbd = 6
+        self.max_lbd = 10
         self.max_lbd_multiplier = 1.1
 
     def reset_variables(self, formula):
@@ -27,51 +27,11 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
         return learned_clause
 
     def analyze_conflict(self):
-        # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
-        learned_clause = []
-        stack = sum(self.assignments, [])
-        p = "conflict"
-        c = 0
-        seen = set()
-        new_decision_level = 0
-        involved_variables = []
-        
-        while True:
-            for q in self.immediate_predecessors[p]:
-                if q not in seen:
-                    seen.add(q)
-                    if q in self.assignments[-1]:
-                        c += 1
-                        involved_variables.append(q)
-                    else:
-                        decision_level = self.decision_level_per_assigned_literal[q]
-                        if decision_level > new_decision_level:
-                            new_decision_level = decision_level
-                        learned_clause.append(-q)
-                        involved_variables.append(-q)
-            while True:
-                p = stack.pop()
-                if p in seen: break
-            c -= 1
-            if c == 0: break
-
-        learned_clause.append(-p)
-        # for some reason this is buggy
+        learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
         learned_clause = self.minimize_learned_clause(learned_clause)
-
         if len(learned_clause) > 0:
-            self.learned_clauses.append(learned_clause)
-            self.known_clauses.append(learned_clause)
-            self.learned_clause_count += 1
-        else:
-            pass
-
-        # update vsids scores
-        self.adjust_for_vsids_overflow()
-        for literal in involved_variables:
-            self.vsids_scores[abs(literal)] += self.vsids_value_to_add
-        self.vsids_value_to_add *= self.vsdids_multiplier
-
+            self.remember_learned_clause(learned_clause)
+        self.update_vsids_scores(involved_variables)
         return new_decision_level
     
     # -> override to add deleted_clause_count

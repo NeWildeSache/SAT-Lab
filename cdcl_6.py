@@ -50,7 +50,7 @@ class cdcl_clause_learning(cdcl):
         self.decision_level = new_decision_level
         self.conflict_clause = None
 
-    def analyze_conflict(self):
+    def get_learned_clause(self):
         # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
         learned_clause = []
         stack = sum(self.assignments, [])
@@ -58,6 +58,7 @@ class cdcl_clause_learning(cdcl):
         c = 0
         seen = set()
         new_decision_level = 0
+        involved_variables = []
         
         while True:
             for q in self.immediate_predecessors[p]:
@@ -65,23 +66,25 @@ class cdcl_clause_learning(cdcl):
                     seen.add(q)
                     if q in self.assignments[-1]:
                         c += 1
+                        involved_variables.append(q)
                     else:
                         decision_level = self.decision_level_per_assigned_literal[q]
                         if decision_level > new_decision_level:
                             new_decision_level = decision_level
                         learned_clause.append(-q)
+                        involved_variables.append(-q)
             while True:
                 p = stack.pop()
                 if p in seen: break
             c -= 1
             if c == 0: break
-
         learned_clause.append(-p)
-        
-        self.learned_clauses.append(learned_clause)
-        self.known_clauses.append(learned_clause)
-        self.learned_clause_count += 1
 
+        return learned_clause, new_decision_level, involved_variables
+
+    def analyze_conflict(self):
+        learned_clause, new_decision_level, _ = self.get_learned_clause()
+        self.remember_learned_clause(learned_clause)
         return new_decision_level
 
 

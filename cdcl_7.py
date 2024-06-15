@@ -16,7 +16,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
             self.watched_clauses[literals_to_watch[0]].append([clause,index,literals_to_watch[1]])
             self.watched_clauses[literals_to_watch[1]].append([clause,index,literals_to_watch[0]])
         else:
-            self.remember_unit_assignments(clause[0])
+            self.certain_assignments.append(clause[0])
 
     def reset_variables(self, formula):
         super().reset_variables(formula)
@@ -28,6 +28,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
         for i, clause in enumerate(self.known_clauses):
             self.set_watched_literals(clause,i)
         self.assigned_and_not_processed_variables = []
+        self.certain_assignments = []
 
     def decide(self):
         decision_variable = super().decide()
@@ -70,12 +71,24 @@ class cdcl_watched_literals(cdcl_clause_learning):
         # add potential "conflict" node to conflict graph
         self.update_conflict_graph([])
 
+    def reinstantiate_certain_assignments(self):
+        for certain_assignment in self.certain_assignments:
+            if certain_assignment not in self.assignments[0]:
+                self.assignments[0].append(certain_assignment)
+            self.decision_level_per_assigned_literal[certain_assignment] = 0
+            if abs(certain_assignment) in self.unassigned_variables:
+                self.unassigned_variables.remove(abs(certain_assignment))
+
     def backtrack(self, new_decision_level):
-        super().backtrack(new_decision_level)
-        # set watched literals for new learned clause
-        self.set_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
+        super().backtrack(new_decision_level) 
+        # re-instantiate 100%-certain assignments due to learned unit clauses
+        self.reinstantiate_certain_assignments()
         # initiate complete unit propagation since there is a new learned clause
         self.assigned_and_not_processed_variables = list(self.decision_level_per_assigned_literal.keys())
+
+    def remember_learned_clause(self, learned_clause):
+        super().remember_learned_clause(learned_clause)
+        self.set_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
     
     # -> override to remove formula / copy.deepcopy(formula) from input variables to propagate()
     def solve(self, formula):

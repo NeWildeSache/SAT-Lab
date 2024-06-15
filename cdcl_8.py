@@ -1,5 +1,6 @@
 from cdcl_7 import cdcl_watched_literals 
 import time
+from formula_preprocessing import get_unique_literals_in_formula
 
 class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05) -> None:
@@ -43,48 +44,17 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
                 self.vsids_scores[variable] = self.vsids_scores[variable] >> 20
             self.vsids_value_to_add = self.vsids_value_to_add >> 20
 
-    # -> override to update vsids scores
-    def analyze_conflict(self):
-        # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
-        learned_clause = []
-        stack = sum(self.assignments, [])
-        p = "conflict"
-        c = 0
-        seen = set()
-        new_decision_level = 0
-        involved_variables = []
-        
-        while True:
-            for q in self.immediate_predecessors[p]:
-                if q not in seen:
-                    seen.add(q)
-                    if q in self.assignments[-1]:
-                        c += 1
-                        involved_variables.append(q)
-                    else:
-                        decision_level = self.decision_level_per_assigned_literal[q]
-                        if decision_level > new_decision_level:
-                            new_decision_level = decision_level
-                        learned_clause.append(-q)
-                        involved_variables.append(-q)
-            while True:
-                p = stack.pop()
-                if p in seen: break
-            c -= 1
-            if c == 0: break
-
-        learned_clause.append(-p)
-        
-        self.learned_clauses.append(learned_clause)
-        self.known_clauses.append(learned_clause)
-        self.learned_clause_count += 1
-
-        # update vsids scores
+    def update_vsids_scores(self, involved_variables):
         self.adjust_for_vsids_overflow()
         for literal in involved_variables:
             self.vsids_scores[abs(literal)] += self.vsids_value_to_add
         self.vsids_value_to_add *= self.vsdids_multiplier
 
+    # -> override to update vsids scores
+    def analyze_conflict(self):
+        learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
+        self.remember_learned_clause(learned_clause)
+        self.update_vsids_scores(involved_variables)
         return new_decision_level
     
     def remember_unit_assignments(self, unit_assignments):
@@ -98,6 +68,8 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def apply_restart(self):
         self.assignments = [[]]
         self.decision_level_per_assigned_literal = {}
+        self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True)
+        self.reinstantiate_certain_assignments()
 
     def apply_restart_policy(self):
         if self.conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:
