@@ -81,6 +81,9 @@ class cdcl:
         return self.decision_level-1
 
     def backtrack(self, new_decision_level):
+        for literal, decision_level in list(self.decision_level_per_literal.items()):
+            if decision_level > new_decision_level:
+                del self.decision_level_per_literal[literal]
         for _ in range(self.decision_level-new_decision_level):
             decision_level_assignments = self.assignments.pop()
             for literal in decision_level_assignments:
