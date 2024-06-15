@@ -18,9 +18,8 @@ class cdcl_clause_learning(cdcl):
             self.immediate_predecessors[unit_assignment] = implicating_literals
 
         # save possible conflicts in conflict graph (overwrites old values so no backtrack needed)
-        if [] in self.formula:
-            conflict_clause = self.known_clauses[self.formula.index([])]
-            implicating_literals = [-literal for literal in conflict_clause]
+        if self.conflict_clause != None:
+            implicating_literals = [-literal for literal in self.conflict_clause]
             self.immediate_predecessors["conflict"] = implicating_literals
 
 
@@ -28,10 +27,12 @@ class cdcl_clause_learning(cdcl):
         self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
         self.propagation_count += extra_propagations
 
+        if [] in self.formula:
+            self.conflict_clause = self.known_clauses[self.formula.index([])]
+
         self.remember_unit_assignments(unit_assignments)
 
         self.update_conflict_graph(unit_clause_indices_and_respective_units)
-        
 
     def analyze_conflict(self):
         # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
@@ -49,7 +50,7 @@ class cdcl_clause_learning(cdcl):
                     if q in self.assignments[-1]:
                         c += 1
                     else:
-                        decision_level = self.decision_level_per_literal[q]
+                        decision_level = self.decision_level_per_assigned_literal[q]
                         if decision_level > new_decision_level:
                             new_decision_level = decision_level
                         learned_clause.append(-q)

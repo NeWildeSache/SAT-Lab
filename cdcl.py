@@ -22,7 +22,8 @@ class cdcl:
         self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True)
         self.num_literals = len(self.unassigned_variables)
         self.learned_clauses = []
-        self.decision_level_per_literal = {}
+        self.decision_level_per_assigned_literal = {}
+        self.conflict_clause = None
 
 
     def solve(self, formula):
@@ -39,7 +40,7 @@ class cdcl:
             self.propagate(self.formula)
 
             # if conflict occurs
-            while [] in self.formula:
+            while self.conflict_clause != None:
                 self.conflict_count += 1
                 # if conflict occurs at the root level -> unsat
                 if self.decision_level == 0:
@@ -71,7 +72,7 @@ class cdcl:
         decision_variable = self.get_decision_variable()
         self.unassigned_variables.remove(abs(decision_variable))
         self.assignments[-1].append(decision_variable)
-        self.decision_level_per_literal[decision_variable] = len(self.assignments)-1
+        self.decision_level_per_assigned_literal[decision_variable] = len(self.assignments)-1
         return decision_variable
 
     def analyze_conflict(self):
@@ -81,25 +82,35 @@ class cdcl:
         return self.decision_level-1
 
     def backtrack(self, new_decision_level):
-        for literal, decision_level in list(self.decision_level_per_literal.items()):
+        for literal, decision_level in list(self.decision_level_per_assigned_literal.items()):
             if decision_level > new_decision_level:
-                del self.decision_level_per_literal[literal]
+                del self.decision_level_per_assigned_literal[literal]
         for _ in range(self.decision_level-new_decision_level):
             decision_level_assignments = self.assignments.pop()
             for literal in decision_level_assignments:
                 self.unassigned_variables.append(abs(literal))
         self.decision_level = new_decision_level
+        self.conflict_clause = None
 
     def remember_unit_assignments(self, unit_assignments):
-        self.assignments[-1] = self.assignments[-1] + unit_assignments
-        for unit_assignment in unit_assignments:
-            self.decision_level_per_literal[unit_assignment] = len(self.assignments)-1
-            try: self.unassigned_variables.remove(abs(unit_assignment))
+        if type(unit_assignments) == int:
+            self.assignments[-1].append(unit_assignments)
+            self.decision_level_per_assigned_literal[unit_assignments] = len(self.assignments)-1
+            try: self.unassigned_variables.remove(abs(unit_assignments))
             except: pass
+        elif type(unit_assignments) == list:
+            self.assignments[-1] = self.assignments[-1] + unit_assignments
+            for unit_assignment in unit_assignments:
+                self.decision_level_per_assigned_literal[unit_assignment] = len(self.assignments)-1
+                try: self.unassigned_variables.remove(abs(unit_assignment))
+                except: pass
 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True)
         self.propagation_count += extra_propagations
+
+        if [] in self.formula:
+            self.conflict_clause = self.known_clauses[self.formula.index([])]
 
         self.remember_unit_assignments(unit_assignments)
 

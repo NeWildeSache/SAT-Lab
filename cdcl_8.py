@@ -1,6 +1,6 @@
-from cdcl_6 import cdcl_clause_learning 
+from cdcl_7 import cdcl_watched_literals 
 
-class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
+class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05) -> None:
         super().__init__()
         self.random_decision_frequency = random_decision_frequency
@@ -37,6 +37,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
                 self.vsids_scores[variable] = self.vsids_scores[variable] >> 20
             self.vsids_value_to_add = self.vsids_value_to_add >> 20
 
+    # -> override to update vsids scores
     def analyze_conflict(self):
         # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
         learned_clause = []
@@ -55,7 +56,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
                         c += 1
                         involved_variables.append(q)
                     else:
-                        decision_level = self.decision_level_per_literal[q]
+                        decision_level = self.decision_level_per_assigned_literal[q]
                         if decision_level > new_decision_level:
                             new_decision_level = decision_level
                         learned_clause.append(-q)
@@ -81,8 +82,11 @@ class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
     
     def remember_unit_assignments(self, unit_assignments):
         super().remember_unit_assignments(unit_assignments)
-        for unit_assignment in unit_assignments:
-            self.phases[abs(unit_assignment)] = True if unit_assignment > 0 else False
+        if type(unit_assignments) == int:
+            self.phases[abs(unit_assignments)] = True if unit_assignments > 0 else False
+        elif type(unit_assignments) == list:
+            for unit_assignment in unit_assignments:
+                self.phases[abs(unit_assignment)] = True if unit_assignment > 0 else False
 
     def apply_restart_policy(self):
         if self.conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:

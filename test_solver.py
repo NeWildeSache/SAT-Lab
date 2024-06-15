@@ -54,13 +54,11 @@ if __name__ == "__main__":
     test_solver(3,5,2,solve_2_sat, return_average_time=False)
     test_solver(100,100,2,solve_2_sat, return_average_time=False)
 
-    solvers = [cdcl,cdcl_clause_learning,cdcl_decision_heuristics_and_restarts]
-    # solvers = [cdcl_clause_learning]
+    solvers = [cdcl,cdcl_clause_learning,cdcl_watched_literals,cdcl_decision_heuristics_and_restarts]
     print_progress = False
     # print_progress = True
-    # solvers = [cdcl_watched_literals]
     # solvers = [cdcl_decision_heuristics_and_restarts]
-    for n,c,k in [(4,16,3),(20,76,3),(30,3.8*30,3)]:
+    for n,c,k in [(3,8,3),(4,16,3),(20,76,3),(30,3.8*30,3)]:
         times = []
         for solver in solvers:
             times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=100))
