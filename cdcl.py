@@ -14,6 +14,7 @@ class cdcl:
         self.propagation_count = 0
         self.decision_count = 0
         self.conflict_count = 0
+        self.learned_clause_count = 0
 
         # init data structures
         self.decision_level = 0
@@ -27,7 +28,7 @@ class cdcl:
 
 
     def solve(self, formula):
-        time_start = time.time()
+        self.time_start = time.time()
         self.reset_variables(formula)
 
         # actual algorithm
@@ -45,8 +46,7 @@ class cdcl:
                 # if conflict occurs at the root level -> unsat
                 if self.decision_level == 0:
                     self.write_proof(sat=False)
-                    runtime = time.time()-time_start
-                    return "UNSAT", runtime, self.propagation_count, self.decision_count, self.conflict_count
+                    return self.return_statement(sat=False)
                 # learn clause and figure out backtracking level
                 new_decision_level = self.analyze_conflict()
                 # backtrack
@@ -59,10 +59,21 @@ class cdcl:
 
         # return sat
         self.write_proof(sat=True)
-        runtime = time.time()-time_start
-        flattened_assignments = sum(self.assignments,[])
-        return "SAT", flattened_assignments, runtime, self.propagation_count, self.decision_count, self.conflict_count
+        return self.return_statement(sat=True)
+    
+    def get_statistics(self):
+        runtime = time.time()-self.time_start
+        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count]
 
+    def return_statement(self, sat):
+        return_statement = []
+        if sat:
+            return_statement.append("SAT")
+            return_statement.append(sum(self.assignments,[]))
+        else:
+            return_statement.append("UNSAT")
+        return return_statement + self.get_statistics()
+            
     def get_decision_variable(self):
         decision_variable = random.sample(self.unassigned_variables,1)[0]
         return decision_variable if random.choice([True,False]) else -decision_variable
@@ -79,6 +90,7 @@ class cdcl:
         learned_clause = [-decision_level_assignments[0] for decision_level_assignments in self.assignments[1:]]
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
+        self.learned_clause_count += 1
         return self.decision_level-1
 
     def backtrack(self, new_decision_level):

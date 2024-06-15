@@ -16,7 +16,6 @@ class cdcl_watched_literals(cdcl_clause_learning):
             self.watched_clauses[literals_to_watch[0]].append([clause,index,literals_to_watch[1]])
             self.watched_clauses[literals_to_watch[1]].append([clause,index,literals_to_watch[0]])
         else:
-
             self.remember_unit_assignments(clause[0])
 
     def reset_variables(self, formula):
@@ -73,12 +72,14 @@ class cdcl_watched_literals(cdcl_clause_learning):
 
     def backtrack(self, new_decision_level):
         super().backtrack(new_decision_level)
+        # set watched literals for new learned clause
         self.set_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
+        # initiate complete unit propagation since there is a new learned clause
         self.assigned_and_not_processed_variables = list(self.decision_level_per_assigned_literal.keys())
     
     # -> override to remove formula / copy.deepcopy(formula) from input variables to propagate()
     def solve(self, formula):
-        time_start = time.time()
+        self.time_start = time.time()
         self.reset_variables(formula)
 
         # actual algorithm
@@ -96,8 +97,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
                 # if conflict occurs at the root level -> unsat
                 if self.decision_level == 0:
                     self.write_proof(sat=False)
-                    runtime = time.time()-time_start
-                    return "UNSAT", runtime, self.propagation_count, self.decision_count, self.conflict_count
+                    return self.return_statement(sat=False)
                 # learn clause and figure out backtracking level
                 new_decision_level = self.analyze_conflict()
                 # backtrack
@@ -110,11 +110,5 @@ class cdcl_watched_literals(cdcl_clause_learning):
 
         # return sat
         self.write_proof(sat=True)
-        runtime = time.time()-time_start
-        flattened_assignments = sum(self.assignments,[])
-        return "SAT", flattened_assignments, runtime, self.propagation_count, self.decision_count, self.conflict_count
-
-if __name__ == "__main__":
-    formula = [[-1, 2, -3], [1, -2, -3], [1, 2, -3], [-1, 2, 3], [1, 2, 3], [-1, -2, -3], [1, -2, 3], [-1, -2, 3]]
-    print(cdcl_watched_literals().solve(formula))
+        return self.return_statement(sat=True)
 

@@ -1,4 +1,5 @@
 from cdcl_7 import cdcl_watched_literals 
+import time
 
 class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05) -> None:
@@ -15,6 +16,11 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
         self.current_luby_sequence = [1,1,2]
         self.current_luby_index = 0
         self.restart_count = 0
+
+    # -> override to add restart_count
+    def get_statistics(self):
+        runtime = time.time()-self.time_start
+        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count, self.restart_count]
 
     def get_decision_variable(self):
         # return random decision variable every 200 conflicts
@@ -71,6 +77,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
         
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
+        self.learned_clause_count += 1
 
         # update vsids scores
         self.adjust_for_vsids_overflow()
@@ -88,6 +95,10 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
             for unit_assignment in unit_assignments:
                 self.phases[abs(unit_assignment)] = True if unit_assignment > 0 else False
 
+    def apply_restart(self):
+        self.assignments = [[]]
+        self.decision_level_per_assigned_literal = {}
+
     def apply_restart_policy(self):
         if self.conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:
             self.restart_count += 1
@@ -96,6 +107,6 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
                 self.current_luby_index = 0
                 self.current_luby_sequence.append(self.current_luby_sequence[-1]*2)
             # restart
-            self.assignments = [[]]
+            self.apply_restart()
 
         

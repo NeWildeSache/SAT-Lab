@@ -9,9 +9,8 @@ class cdcl_clause_learning(cdcl):
         super().reset_variables(formula)
         self.immediate_predecessors = {}
 
-
     def update_conflict_graph(self, unit_clause_indices_and_respective_units):
-        # save implications in conflict graph (overwrites old values so no backtrack needed)
+        # save implications in conflict graph
         for unit_clause_index, unit_assignment in unit_clause_indices_and_respective_units:
             clause_that_became_unit = self.known_clauses[unit_clause_index]
             implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
@@ -21,7 +20,6 @@ class cdcl_clause_learning(cdcl):
         if self.conflict_clause != None:
             implicating_literals = [-literal for literal in self.conflict_clause]
             self.immediate_predecessors["conflict"] = implicating_literals
-
 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
@@ -33,6 +31,24 @@ class cdcl_clause_learning(cdcl):
         self.remember_unit_assignments(unit_assignments)
 
         self.update_conflict_graph(unit_clause_indices_and_respective_units)
+
+    def backtrack(self, new_decision_level):
+        for literal, decision_level in list(self.decision_level_per_assigned_literal.items()):
+            if decision_level > new_decision_level:
+                del self.decision_level_per_assigned_literal[literal]
+        for _ in range(self.decision_level-new_decision_level):
+            # remove all assignments from decision level
+            decision_level_assignments = self.assignments.pop()
+            for literal in decision_level_assignments:
+                # backtrack conflict graph
+                self.immediate_predecessors[literal] = []
+                for predecessors in self.immediate_predecessors.values():
+                    if literal in predecessors:
+                        predecessors.remove(literal)
+                # update unassigned variables 
+                self.unassigned_variables.append(abs(literal))
+        self.decision_level = new_decision_level
+        self.conflict_clause = None
 
     def analyze_conflict(self):
         # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
@@ -64,6 +80,7 @@ class cdcl_clause_learning(cdcl):
         
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
+        self.learned_clause_count += 1
 
         return new_decision_level
 

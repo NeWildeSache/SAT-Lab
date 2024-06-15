@@ -3,10 +3,11 @@ from davis_putnam import davis_putnam
 from pysat.solvers import Cadical103
 from random_cnf import random_cnf
 from dpll import dpll
-from cdcl import cdcl as cdcl
-from cdcl_6 import cdcl_clause_learning as cdcl_clause_learning
-from cdcl_7 import cdcl_watched_literals as cdcl_watched_literals
-from cdcl_8 import cdcl_decision_heuristics_and_restarts as cdcl_decision_heuristics_and_restarts
+from cdcl import cdcl 
+from cdcl_6 import cdcl_clause_learning 
+from cdcl_7 import cdcl_watched_literals 
+from cdcl_8 import cdcl_decision_heuristics_and_restarts 
+from cdcl_9 import cdcl_clause_minimization_and_deletion 
 import numpy as np
 
 def test_solver(n,c,k,solver,num_tests=50,return_average_time=True,print_progress=False):
@@ -54,11 +55,11 @@ if __name__ == "__main__":
     test_solver(3,5,2,solve_2_sat, return_average_time=False)
     test_solver(100,100,2,solve_2_sat, return_average_time=False)
 
-    solvers = [cdcl,cdcl_clause_learning,cdcl_watched_literals,cdcl_decision_heuristics_and_restarts]
+    solvers = [cdcl,cdcl_clause_learning,cdcl_watched_literals,cdcl_decision_heuristics_and_restarts,cdcl_clause_minimization_and_deletion]
     print_progress = False
     # print_progress = True
-    # solvers = [cdcl_decision_heuristics_and_restarts]
-    for n,c,k in [(3,8,3),(4,16,3),(20,76,3),(30,3.8*30,3)]:
+    # solvers = [cdcl_clause_minimization_and_deletion]
+    for n,c,k in [(4,16,3),(20,76,3),(30,114,3)]:
         times = []
         for solver in solvers:
             times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=100))
