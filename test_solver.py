@@ -54,7 +54,7 @@ if __name__ == "__main__":
     test_solver(3,5,2,solve_2_sat, return_average_time=False)
     test_solver(100,100,2,solve_2_sat, return_average_time=False)
 
-    solvers = [cdcl,cdcl_clause_learning]
+    solvers = [cdcl,cdcl_clause_learning,cdcl_decision_heuristics_and_restarts]
     # solvers = [cdcl_clause_learning]
     print_progress = False
     # print_progress = True

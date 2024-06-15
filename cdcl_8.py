@@ -1,6 +1,4 @@
 from cdcl_6 import cdcl_clause_learning 
-import networkx as nx
-import sys
 
 class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05) -> None:
@@ -40,37 +38,44 @@ class cdcl_decision_heuristics_and_restarts(cdcl_clause_learning):
             self.vsids_value_to_add = self.vsids_value_to_add >> 20
 
     def analyze_conflict(self):
-        # get learned clause using first uip
-        last_decision_literal = self.assignments[-1][0]
-        first_uip = nx.immediate_dominators(self.conflict_graph_predecessors, last_decision_literal)["conflict"]
-        last_decision_level_literals = self.assignments[-1]
-        descendants_of_uip = list(nx.descendants(self.conflict_graph_predecessors, first_uip))
-        predecessors_of_uip_descendants = set()
-        for descendant in descendants_of_uip:
-            predecessors = list(self.conflict_graph_predecessors.predecessors(descendant))
-            for predecessor in predecessors:
-                predecessors_of_uip_descendants.add(predecessor)
-        predecessors_of_uip_descendants = list(predecessors_of_uip_descendants)
-        learned_clause = [-literal for literal in predecessors_of_uip_descendants if literal not in last_decision_level_literals]
-        learned_clause.append(-first_uip)
+        # learn clause -> https://efforeffort.wordpress.com/2009/03/09/linear-time-first-uip-calculation/
+        learned_clause = []
+        stack = sum(self.assignments, [])
+        p = "conflict"
+        c = 0
+        seen = set()
+        new_decision_level = 0
+        involved_variables = []
+        
+        while True:
+            for q in self.immediate_predecessors[p]:
+                if q not in seen:
+                    seen.add(q)
+                    if q in self.assignments[-1]:
+                        c += 1
+                        involved_variables.append(q)
+                    else:
+                        decision_level = self.decision_level_per_literal[q]
+                        if decision_level > new_decision_level:
+                            new_decision_level = decision_level
+                        learned_clause.append(-q)
+                        involved_variables.append(-q)
+            while True:
+                p = stack.pop()
+                if p in seen: break
+            c -= 1
+            if c == 0: break
+
+        learned_clause.append(-p)
         
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
 
         # update vsids scores
         self.adjust_for_vsids_overflow()
-        descendants_of_uip.remove("conflict")
-        involved_variables = set(learned_clause+descendants_of_uip)
         for literal in involved_variables:
             self.vsids_scores[abs(literal)] += self.vsids_value_to_add
         self.vsids_value_to_add *= self.vsdids_multiplier
-        
-        # get new decision level
-        new_decision_level = 0
-        for i, decision_level_assignments in enumerate(reversed(self.assignments[:-1])):
-            intersection = [item for item in decision_level_assignments if item in learned_clause]
-            if len(intersection) > 0:
-                new_decision_level = len(self.assignments)-(i+2)
 
         return new_decision_level
     
