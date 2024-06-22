@@ -14,6 +14,7 @@ def binom(x,y):
         div = a // (b*(x-y))
         return(div)  
     
+# n = number of variables, c = number of clauses
 def convert_to_dimacs(formula,n,c):
     return "p cnf " + str(n) + " " + str(c) + "\n" + "\n".join([" ".join([str(l) for l in clause]) + " 0" for clause in formula])
 
@@ -58,7 +59,6 @@ if __name__ == "__main__":
     n = int(args.num_variables)
     c = int(args.num_clauses)
     k = int(args.num_literals)
-    # get n, c, k from user
     formula = random_cnf(n,c,k)
     output = convert_to_dimacs(formula,n,c)
     print(output)
