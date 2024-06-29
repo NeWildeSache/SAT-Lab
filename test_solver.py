@@ -60,13 +60,15 @@ if __name__ == "__main__":
     # print_progress = True
     # solvers = [cdcl_clause_minimization_and_deletion]
     for n,c,k in [(4,16,3),(20,76,3),(30,114,3)]:
-        times = []
+        times = {solver.__module__: 0 for solver in solvers}
         for solver in solvers:
-            times.append(test_solver(n,c,k,solver,print_progress=print_progress,num_tests=100))
+            times[solver.__module__] = test_solver(n,c,k,solver,print_progress=print_progress,num_tests=100)
 
         print(f"Times for {n},{c},{k}")
-        for i,time in enumerate(times):
-            print(f"{solvers[i].__name__}: {time}")
+        for solver,time in times.items():
+            print(f"{solver}: {time}")
+        
+        print(f"Time order of solvers: {sorted(times,key=times.get)}")
     
     print("All tests passed")
 

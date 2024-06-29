@@ -8,9 +8,10 @@ class cdcl:
     def __init__(self) -> None:
         pass
 
+    # resets/initializes all variables
     def reset_variables(self, formula):
         self.formula = copy.deepcopy(formula)
-        self.known_clauses = copy.deepcopy(formula)
+        self.known_clauses = copy.deepcopy(formula) # = original formula + learned clauses
         self.propagation_count = 0
         self.decision_count = 0
         self.conflict_count = 0
@@ -26,7 +27,7 @@ class cdcl:
         self.decision_level_per_assigned_literal = {}
         self.conflict_clause = None
 
-
+    # main function to solve formula
     def solve(self, formula):
         self.time_start = time.time()
         self.reset_variables(formula)
@@ -61,10 +62,12 @@ class cdcl:
         self.write_proof(sat=True)
         return self.return_statement(sat=True)
     
+    # returns statistics for last solve run
     def get_statistics(self):
         runtime = time.time()-self.time_start
         return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count]
 
+    # creates the return statement for the last solve run
     def return_statement(self, sat):
         return_statement = []
         if sat:
@@ -74,32 +77,38 @@ class cdcl:
             return_statement.append("UNSAT")
         return return_statement + self.get_statistics()
             
+    # returns the new decision variable
     def get_decision_variable(self):
         decision_variable = random.sample(self.unassigned_variables,1)[0]
         return decision_variable if random.choice([True,False]) else -decision_variable
 
+    # returns the new decision variable and updates data structures accordingly
     def decide(self):
         self.decision_count += 1
         decision_variable = self.get_decision_variable()
-        self.unassigned_variables.remove(abs(decision_variable))
-        self.assignments[-1].append(decision_variable)
+        self.remember_assignments(decision_variable)
         self.decision_level_per_assigned_literal[decision_variable] = len(self.assignments)-1
         return decision_variable
     
+    # updates data structures with new learned clause
     def remember_learned_clause(self,learned_clause):
         self.learned_clauses.append(learned_clause)
         self.known_clauses.append(learned_clause)
         self.learned_clause_count += 1
 
+    # learns new clause and returns new decision level
     def analyze_conflict(self):
         learned_clause = [-decision_level_assignments[0] for decision_level_assignments in self.assignments[1:]]
         self.remember_learned_clause(learned_clause)
         return self.decision_level-1
 
+    # backtracks data structures to new decision level
     def backtrack(self, new_decision_level):
+        # backtrack decision_level_per_assigned_literal
         for literal, decision_level in list(self.decision_level_per_assigned_literal.items()):
             if decision_level > new_decision_level:
                 del self.decision_level_per_assigned_literal[literal]
+        # backtrack assignments and unassigned_variables
         for _ in range(self.decision_level-new_decision_level):
             decision_level_assignments = self.assignments.pop()
             for literal in decision_level_assignments:
@@ -107,19 +116,23 @@ class cdcl:
         self.decision_level = new_decision_level
         self.conflict_clause = None
 
-    def remember_unit_assignments(self, unit_assignments):
-        if type(unit_assignments) == int:
-            self.assignments[-1].append(unit_assignments)
-            self.decision_level_per_assigned_literal[unit_assignments] = len(self.assignments)-1
-            try: self.unassigned_variables.remove(abs(unit_assignments))
-            except: pass
-        elif type(unit_assignments) == list:
-            self.assignments[-1] = self.assignments[-1] + unit_assignments
-            for unit_assignment in unit_assignments:
-                self.decision_level_per_assigned_literal[unit_assignment] = len(self.assignments)-1
-                try: self.unassigned_variables.remove(abs(unit_assignment))
-                except: pass
+    # updates data structures with new assignment
+    def remember_assignment(self, assignment):
+        self.assignments[-1].append(assignment)
+        self.decision_level_per_assigned_literal[assignment] = len(self.assignments)-1
+        if abs(assignment) in self.unassigned_variables: 
+            self.unassigned_variables.remove(abs(assignment))
 
+    # updates data structures with new assignments
+    # allows for input as list or integer
+    def remember_assignments(self, assignments):
+        if type(assignments) == list:
+            for unit_assignment in assignments:
+                self.remember_assignment(unit_assignment)
+        elif type(assignments) == int:
+            self.remember_assignment(assignments)
+
+    # applies assignments and unit propagates formula 
     def propagate(self, formula):
         self.formula, unit_assignments, extra_propagations = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True)
         self.propagation_count += extra_propagations
@@ -127,12 +140,11 @@ class cdcl:
         if [] in self.formula:
             self.conflict_clause = self.known_clauses[self.formula.index([])]
 
-        self.remember_unit_assignments(unit_assignments)
+        self.remember_assignments(unit_assignments)
 
-
+    # applies restart policy
     def apply_restart_policy(self):
         pass
-
 
     # writes proof in DRAT format
     def write_proof(self, sat):
