@@ -15,6 +15,11 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
         # lbd scores of learned clauses: {clause: lbd_score}
         self.lbd_scores = []
 
+    # -> override to add deleted_clause_count
+    def get_statistics(self):
+        runtime = time.time()-self.time_start
+        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count, self.deleted_clause_count, self.restart_count]
+
     # minimizes learned clause 
     def minimize_learned_clause(self, learned_clause):
         literals_to_delete = set()
@@ -47,19 +52,14 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     def remember_learned_clause(self, learned_clause):
         super().remember_learned_clause(learned_clause)
         self.lbd_scores.append(self.lbd(learned_clause))
-    
-    # -> override to add deleted_clause_count
-    def get_statistics(self):
-        runtime = time.time()-self.time_start
-        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count, self.deleted_clause_count, self.restart_count]
-
+        
     # returns lbd score of clause
     def lbd(self,clause):
         unique_decision_levels = set()
         for literal in clause:
             unique_decision_levels.add(self.decision_level_per_assigned_literal[-literal])
         return len(unique_decision_levels)
-
+    
     # applies clause deletion using lbd score
     def delete_learned_clauses(self):
         for learned_clause in copy.deepcopy(self.learned_clauses):
