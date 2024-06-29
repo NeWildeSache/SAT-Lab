@@ -12,6 +12,8 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     def reset_variables(self, formula):
         super().reset_variables(formula)
         self.deleted_clause_count = 0
+        # lbd scores of learned clauses: {clause: lbd_score}
+        self.lbd_scores = []
 
     # minimizes learned clause 
     def minimize_learned_clause(self, learned_clause):
@@ -38,8 +40,13 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
         learned_clause = self.minimize_learned_clause(learned_clause)
         if len(learned_clause) > 0:
             self.remember_learned_clause(learned_clause)
-        self.update_vsids_scores(involved_variables)
+            self.update_vsids_scores(involved_variables)
         return new_decision_level
+    
+    # -> override to also remember lbd score of learned clause 
+    def remember_learned_clause(self, learned_clause):
+        super().remember_learned_clause(learned_clause)
+        self.lbd_scores.append(self.lbd(learned_clause))
     
     # -> override to add deleted_clause_count
     def get_statistics(self):
@@ -50,17 +57,19 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     def lbd(self,clause):
         unique_decision_levels = set()
         for literal in clause:
-            unique_decision_levels.add(self.decision_level_per_assigned_literal[literal])
+            unique_decision_levels.add(self.decision_level_per_assigned_literal[-literal])
         return len(unique_decision_levels)
 
     # applies clause deletion using lbd score
     def delete_learned_clauses(self):
         for learned_clause in copy.deepcopy(self.learned_clauses):
-            lbd = self.lbd(learned_clause)
+            lbd = self.lbd_scores[learned_clause]
             if lbd > self.max_lbd and lbd > 2:
                 self.deleted_clause_count += 1
                 self.known_clauses.remove(learned_clause)
-                self.learned_clauses.remove(learned_clause)
+                clause_index = self.learned_clauses.index(learned_clause)
+                self.learned_clauses.pop(clause_index)
+                self.lbd_scores.pop(clause_index)
         self.max_lbd *= self.max_lbd_multiplier
 
     # -> override to add deletion of learned clauses
