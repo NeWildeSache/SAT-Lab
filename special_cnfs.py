@@ -66,11 +66,13 @@ def pebbling_cnf(n):
     for v in range(k):
         pebbling.append([get_pebbling_variable(v,0),get_pebbling_variable(v,1)])
 
-    # predecessors must have same color as successors
+    # if predecessors have colors, successors must also have colors
     for v in range(k,n):
         pred_1, pred_2 = predecessors[v]
         pebbling.append([-get_pebbling_variable(pred_1,0),-get_pebbling_variable(pred_2,1),get_pebbling_variable(v,0),get_pebbling_variable(v,1)])
         pebbling.append([-get_pebbling_variable(pred_1,1),-get_pebbling_variable(pred_2,0),get_pebbling_variable(v,0),get_pebbling_variable(v,1)])
+        pebbling.append([-get_pebbling_variable(pred_1,1),-get_pebbling_variable(pred_2,1),get_pebbling_variable(v,0),get_pebbling_variable(v,1)])
+        pebbling.append([-get_pebbling_variable(pred_1,0),-get_pebbling_variable(pred_2,0),get_pebbling_variable(v,0),get_pebbling_variable(v,1)])
 
     # final node can't have either color
     pebbling.append([-get_pebbling_variable(n-1,0)])

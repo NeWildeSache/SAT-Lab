@@ -55,7 +55,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
             self.vsids_scores[abs(literal)] += self.vsids_value_to_add
         self.vsids_value_to_add *= self.vsdids_multiplier
 
-    # -> override to update vsids scores
+    # -> override to also update vsids scores
     def analyze_conflict(self):
         learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
         self.remember_learned_clause(learned_clause)
