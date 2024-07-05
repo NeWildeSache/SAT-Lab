@@ -41,6 +41,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
 
     # -> override to add clause minimization
     def analyze_conflict(self):
+        self.current_conflict_count += 1
         learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
         learned_clause = self.minimize_learned_clause(learned_clause)
         if len(learned_clause) > 0:

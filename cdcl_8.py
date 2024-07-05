@@ -18,6 +18,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
         # just remember "current" sequence of luby sequence and current position in it
         self.current_luby_sequence = [1,1,2]
         self.current_luby_index = 0
+        self.current_conflict_count = 0
         self.restart_count = 0
 
     # -> override to add restart_count
@@ -57,6 +58,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
 
     # -> override to also update vsids scores
     def analyze_conflict(self):
+        self.current_conflict_count += 1
         learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
         self.remember_learned_clause(learned_clause)
         self.update_vsids_scores(involved_variables)
@@ -76,7 +78,8 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
 
     # new restart policy: luby restarts
     def apply_restart_policy(self):
-        if self.conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:
+        if self.current_conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:
+            self.current_conflict_count = 0
             self.restart_count += 1
             # if current luby sequence is finished -> append it accordingly and reset position to 0
             if self.current_luby_index == len(self.current_luby_sequence)-1:
