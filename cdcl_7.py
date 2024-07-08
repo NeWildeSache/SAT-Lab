@@ -19,13 +19,13 @@ class cdcl_watched_literals(cdcl_clause_learning):
             self.watched_clauses[literal] = []
             self.watched_clauses[-literal] = []
         for i, clause in enumerate(self.known_clauses):
-            self.set_watched_literals(clause,i)
+            self.init_watched_literals(clause,i)
         # variables that are assigned and not yet propagated
         self.assigned_and_not_processed_variables = []
 
     # sets watched literals for a clause
     # also checks if clause is unit -> add to certain_assignments and remember for propagation
-    def set_watched_literals(self,clause,index):
+    def init_watched_literals(self,clause,index):
         if len(clause) >= 2:
             literals_to_watch = random.sample(clause,2)
             # remember [clause, clause_index, other_literal_watched_for_this_clause]
@@ -98,7 +98,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
     # -> override to also instantiate watched literals for new learned clause
     def remember_learned_clause(self, learned_clause):
         super().remember_learned_clause(learned_clause)
-        self.set_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
+        self.init_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
     
     # -> override to remove input variables to propagate()
     def solve(self, formula):
