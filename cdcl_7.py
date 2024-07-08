@@ -53,6 +53,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
                         if (not (-possible_new_watched_literal in self.decision_level_per_assigned_literal) 
                                 and possible_new_watched_literal != other_watched_literal):
                             new_watched_literal = possible_new_watched_literal
+                            break
                     # if new watched literal is found -> set new watched literal
                     if new_watched_literal != None:
                         self.watched_clauses[watched_literal].remove([clause, clause_index, other_watched_literal])
