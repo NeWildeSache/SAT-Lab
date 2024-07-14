@@ -1,5 +1,6 @@
 from itertools import combinations
 
+# returns formula without tautological clauses
 def remove_tautologies(formula):
     if len(formula) == 0:
         return formula
@@ -11,42 +12,37 @@ def remove_tautologies(formula):
                 tautological_clauses.append(clause)
     return [clause for clause in formula if clause not in tautological_clauses]
 
+# returns formula without doubles
 def remove_doubles(formula):
     formula = set(map(frozenset, formula))
     formula = list(map(list,formula))
     return formula
 
+# returns formula without pure literals
 def pure_literal_elimination(formula, count_eliminations=False, return_assignments=False):
-    # check if formula is empty -> return
-    if len(formula) == 0:
-        if count_eliminations:
-            if return_assignments:
-                return formula, {}, 0
-            return formula, 0
-        else:
-            if return_assignments:
-                return formula, {}
-            return formula
-
-    # eliminate pure literals
-    literals = get_unique_literals_in_formula(formula)
     pure_literals = []
-    for literal in literals:
-        if literal in literals and -literal not in literals:
-            pure_literals.append(literal)
-    eliminated_formula = [clause for clause in formula if not any(literal in pure_literals for literal in clause)]
+    original_length = len(formula)
+
+    if len(formula) != 0:
+        literals = get_unique_literals_in_formula(formula)
+        for literal in literals:
+            if literal in literals and -literal not in literals:
+                pure_literals.append(literal)
+        formula = [clause for clause in formula if not any(literal in pure_literals for literal in clause)]
+    else:
+        formula = formula
 
     # return what's needed
+    if not return_assignments and not count_eliminations:
+        return formula
+    return_statement = [formula]
     if return_assignments:
-        assignments = {abs(literal): True if literal > 0 else False for literal in pure_literals}
-        if count_eliminations:
-            return eliminated_formula, assignments, len(formula)-len(eliminated_formula)
-        return eliminated_formula, assignments
-    else:
-        if count_eliminations:
-            return eliminated_formula, len(formula)-len(eliminated_formula)
-        return eliminated_formula
+        return_statement.append(pure_literals)
+    if count_eliminations:
+        return_statement.append(original_length-len(formula))
+    return return_statement
     
+# returns unique literals in formula
 def get_unique_literals_in_formula(formula, only_positive=False):
     flattened_formula = sum(formula, [])
     # return literals only in positive form
@@ -57,37 +53,49 @@ def get_unique_literals_in_formula(formula, only_positive=False):
     else:
         return list(set(flattened_formula))
 
+# returns formula without subsumed clauses
 def subsumption(formula, count_subsumptions=False):
-    if len(formula) == 0:
-        if count_subsumptions:
-            return formula, 0
-        else:
-            return formula
+    subsumption_count = 0
+        
+    if len(formula) != 0:
+        unnecessary_clauses = []
+        for (clause_index, clause), (second_clause_index, second_clause) in combinations(enumerate(formula), 2):
+            if len(clause) < len(second_clause):
+                if set(clause).issubset(set(second_clause)):
+                    unnecessary_clauses.append(second_clause_index)
+                    subsumption_count += 1
+            else:
+                if set(second_clause).issubset(set(clause)):
+                    unnecessary_clauses.append(clause_index)
+                    subsumption_count += 1
 
-    formula = remove_doubles(formula)
-    unnecessary_clauses = []
-    for clause, second_clause in combinations(formula, 2):
-        if set(clause).issubset(set(second_clause)):
-            unnecessary_clauses.append(second_clause)
-            continue
-        if set(second_clause).issubset(set(clause)):
-            unnecessary_clauses.append(clause)
-
-    formula = [clause for clause in formula if clause not in unnecessary_clauses]
+        formula = [clause for i, clause in enumerate(formula) if i not in unnecessary_clauses]
+    
     if count_subsumptions:
-        count = len(unnecessary_clauses)
-        return formula, count
+        return formula, subsumption_count
     else:
         return formula
 
 
 if __name__ == "__main__":
-    formula = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
-    print(remove_doubles(formula))
-    print(pure_literal_elimination(formula))
-    print(subsumption(formula))
+    formula = [[1,2,3],[-2,-3],[-3,-2],[2,3],[2,-2]]
+    print(f"Original formula: {formula}")
+    print(f"Without doubles: {remove_doubles(formula)}")
+    print(f"Without tautologies: {remove_tautologies(formula)}")
+    print(f"Without pure literals: {pure_literal_elimination(formula)}")
+    print(f"Without subsumptions: {subsumption(formula)}")
 
     formula = [[-2,-3],[-2,-3]]
-    print(subsumption(formula))
+    assert subsumption(formula) == [[-2,-3]] or subsumption(formula) == [[-3,-2]]
 
-    print(pure_literal_elimination([[],[],[]]))
+    formula = [[],[],[]]
+    assert remove_tautologies(formula) == formula
+    assert remove_doubles(formula) == [[]]
+    assert pure_literal_elimination(formula) == formula
+    assert subsumption(formula) == [[]]
+
+    formula = []
+    assert pure_literal_elimination(formula) == formula
+    assert remove_doubles(formula) == formula
+    assert subsumption(formula) == formula
+    assert remove_tautologies(formula) == formula
