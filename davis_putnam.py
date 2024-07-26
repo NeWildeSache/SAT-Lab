@@ -1,7 +1,9 @@
-from unit_propagate import unit_propagate
+from unit_propagate_using_lists import unit_propagate
 from formula_preprocessing import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination
+import time
 
 def davis_putnam(formula):
+    time_start = time.time()
     while True:
         propagation_count = 0
         elimination_count = 0
@@ -11,11 +13,8 @@ def davis_putnam(formula):
         # Preprocessing
         while True:
             len_before = len(formula)
-            formula, _, extra_propagations = unit_propagate(formula, True)
+            formula, extra_propagations = unit_propagate(formula, count_propagations=True)
             propagation_count += extra_propagations
-
-            if [] in formula:
-                return "UNSAT", propagation_count, added_clause_count, elimination_count, subsumption_count
 
             formula = remove_doubles(remove_tautologies(formula))
             formula, extra_eliminations = pure_literal_elimination(formula, True)
@@ -25,8 +24,16 @@ def davis_putnam(formula):
 
             if len(formula) == len_before:
                 break
+        
+        # check if we're done
         if len(formula) == 0:
-            return "SAT", propagation_count, added_clause_count, elimination_count, subsumption_count
+            runtime = time.time()-time_start
+            return_dict = {"SAT": True, "runtime": runtime ,"propagation_count": propagation_count, "added_clause_count": added_clause_count, "elimination_count": elimination_count, "subsumption_count": subsumption_count}
+            return return_dict
+        if [] in formula:
+            runtime = time.time()-time_start
+            return_dict = {"SAT": False, "runtime": runtime, "propagation_count": propagation_count, "added_clause_count": added_clause_count, "elimination_count": elimination_count, "subsumption_count": subsumption_count}
+            return return_dict
         
         # choose arbitrary variable
         variable = formula[0][0]
@@ -53,7 +60,3 @@ def davis_putnam(formula):
         # add resolved clauses
         formula = formula + resolved_clauses
         added_clause_count = added_clause_count + len(resolved_clauses)
-
-if __name__ == "__main__":
-    formula = [[1], [-1]]
-    print(davis_putnam(formula))

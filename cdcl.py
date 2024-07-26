@@ -65,17 +65,14 @@ class cdcl:
     # returns statistics for last solve run
     def get_statistics(self):
         runtime = time.time()-self.time_start
-        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count]
+        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count}
 
     # creates the return statement for the last solve run
     def return_statement(self, sat):
-        return_statement = []
-        if sat:
-            return_statement.append("SAT")
-            return_statement.append(sum(self.assignments,[]))
-        else:
-            return_statement.append("UNSAT")
-        return return_statement + self.get_statistics()
+        return_statement = {"SAT": sat}
+        if sat: return_statement["model"] = self.assignments
+        return_statement.update(self.get_statistics())
+        return return_statement
             
     # returns the new decision variable
     def get_decision_variable(self):

@@ -1,6 +1,6 @@
 import copy
 
-def unit_propagate(formula, count_propagations=False, return_assignments=False, return_unit_clause_indices_and_respective_units=False):
+def unit_propagate(formula, return_assignments=False, count_propagations=False, return_unit_clause_indices_and_respective_units=False):
     # preprocess
     assignments = []
     num_propagations = 0
@@ -17,7 +17,7 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
                 unit_clause_indices_and_respective_units.append([index, literal])
                 assignments.append(literal)
         # simplify formula with given assignments
-        formula = simplify(formula, assignments)
+        formula = simplify(formula, assignments, placeholders_for_fulfilled_clauses=return_unit_clause_indices_and_respective_units)
         # count propagations
         num_propagations += 1
         # stop if nothing happens or unsat
@@ -37,10 +37,8 @@ def unit_propagate(formula, count_propagations=False, return_assignments=False, 
 
 # simplifies a formula given an assignment
 # also works if only one assignment was given (e.g. x=0 is explicitly stated but !x=1 isn't)
-def simplify(formula, assignments):
-    if len(assignments) != 0:
-        if type(assignments[0]) == list:
-            assignments = sum(assignments, [])
+def simplify(formula, assignments, placeholders_for_fulfilled_clauses=False):
+    assignments = validated_assignments(assignments)
     
     clauses_to_remove = []
     for literal in assignments:
@@ -52,8 +50,18 @@ def simplify(formula, assignments):
             elif -literal in clause:
                 clause.remove(-literal)
                 
-    formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
+    if placeholders_for_fulfilled_clauses:
+        formula = [clause if i not in clauses_to_remove else "True" for i, clause in enumerate(formula)]
+    else:
+        formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
+
+
+def validated_assignments(assignments):
+    if len(assignments) != 0:
+        if type(assignments[0]) == list:
+            return sum(assignments, [])
+    return assignments
 
 
 # TESTING

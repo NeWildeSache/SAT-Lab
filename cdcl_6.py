@@ -27,7 +27,9 @@ class cdcl_clause_learning(cdcl):
 
     # -> override to also update conflict graph
     def propagate(self, formula):
-        self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(simplify(formula,self.assignments),return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
+        self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(
+            simplify(formula,self.assignments, placeholders_for_fulfilled_clauses=True),
+            return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
         self.propagation_count += extra_propagations
 
         if [] in self.formula:

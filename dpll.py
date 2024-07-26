@@ -12,15 +12,14 @@ class dpll:
     def solve(self, formula):
         # set globals
         self.reset_variables(formula)
-        # solve
+        # solve and track time
         time_start = time.time()
         assignments = self.dpll_step(assignments=[])
-        time_end = time.time()
+        time_spent = time.time() - time_start
         # return
-        if self.sat == "SAT":
-            return self.sat, assignments, time_end-time_start, self.propagation_count, self.pure_literal_elimination_count, self.decision_count
-        else:
-            return self.sat, time_end-time_start, self.propagation_count, self.pure_literal_elimination_count, self.decision_count
+        return_dict = {"SAT": self.sat, "runtime": time_spent, "propagation_count": self.propagation_count, "pure_literal_elimination_count": self.pure_literal_elimination_count, "decision_count": self.decision_count}
+        if self.sat: return_dict["model"] = assignments
+        return return_dict
         
     def reset_variables(self, formula):
         self.formula = formula
@@ -28,7 +27,7 @@ class dpll:
         self.propagation_count = 0
         self.pure_literal_elimination_count = 0
         self.decision_count = 0
-        self.sat = "UNSAT"
+        self.sat = False
 
     def dpll_step(self, assignments):
         # get formula with current assignments
@@ -51,7 +50,7 @@ class dpll:
         
         # check if we're done
         if len(simplified_formula) == 0:
-            self.sat = "SAT"
+            self.sat = True
             return assignments
         if [] in simplified_formula:
             return assignments
@@ -67,7 +66,7 @@ class dpll:
         assignments.append(-decision_variable)
         self.decision_count += 1
         assignments_for_return = self.dpll_step(copy.deepcopy(assignments))
-        if self.sat != "SAT":
+        if self.sat != True:
             assignments[-1] = decision_variable
             self.decision_count += 1
             assignments_for_return = self.dpll_step(copy.deepcopy(assignments))

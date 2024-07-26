@@ -18,7 +18,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     # -> override to add deleted_clause_count
     def get_statistics(self):
         runtime = time.time()-self.time_start
-        return [runtime, self.propagation_count, self.decision_count, self.conflict_count, self.learned_clause_count, self.deleted_clause_count, self.restart_count]
+        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count, "restart_count": self.restart_count, "deleted_clause_count": self.deleted_clause_count}
 
     # minimizes learned clause 
     def minimize_learned_clause(self, learned_clause):
