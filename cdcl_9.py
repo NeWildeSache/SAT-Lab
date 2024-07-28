@@ -1,9 +1,7 @@
 from cdcl_8 import cdcl_decision_heuristics_and_restarts
-import copy
-import time
 
 class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restarts):
-    def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, max_lbd=10, max_lbd_multiplier=1.1) -> None:
+    def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, max_lbd=7, max_lbd_multiplier=1.1) -> None:
         super().__init__(random_decision_frequency, vsids_multiplier, c)
         self.max_lbd = max_lbd
         self.max_lbd_multiplier = max_lbd_multiplier
@@ -11,7 +9,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     # -> override to add deleted_clause_count
     def reset_variables(self, formula):
         super().reset_variables(formula)
-        # lbd scores of learned clauses: {clause: lbd_score}
+        # lbd scores of learned clauses, uses same order as self.learned_clauses
         self.lbd_scores = []
 
     # minimizes learned clause 

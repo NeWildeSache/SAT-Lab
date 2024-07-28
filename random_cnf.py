@@ -4,10 +4,12 @@ import numpy as np
 import argparse
 
 def binom(x,y):
-    if y == 1 or y == x:
+    if y == 1:
+        return(x)
+    if y == x:
         return(1)
     if y > x:
-        return(0)        
+        return(0)      
     else:
         a = math.factorial(x)
         b = math.factorial(y)
@@ -18,14 +20,15 @@ def binom(x,y):
 def convert_to_dimacs(formula,n,c):
     return "p cnf " + str(n) + " " + str(c) + "\n" + "\n".join([" ".join([str(l) for l in clause]) + " 0" for clause in formula])
 
-def random_cnf(n,c,k):
+def random_cnf(n,c,k,seed=42):
     # stop for wrong input
     num_possible_clauses = binom(n,k)*2**k
     if n <= 0 or c <= 0 or k <= 0 or k > n or num_possible_clauses<c:
         print("Invalid input")
-        exit()
+        return None
     # initialize
     formula = []
+    random.seed(seed)
     # generate random cnf
     possible_literals = list(range(1, n+1))
     i = 0

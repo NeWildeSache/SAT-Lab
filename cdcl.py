@@ -117,7 +117,7 @@ class cdcl:
         self.conflict_clause = None
 
     # updates data structures with new assignment
-    def remember_assignment(self, assignment):
+    def remember_assignment(self, assignment: int):
         self.assignments[-1].append(assignment)
         self.decision_level_per_assigned_literal[assignment] = len(self.assignments)-1
         if abs(assignment) in self.unassigned_variables: 
@@ -128,7 +128,7 @@ class cdcl:
     def remember_assignments(self, assignments):
         if type(assignments) == list:
             for unit_assignment in assignments:
-                self.remember_assignment(unit_assignment)
+                self.remember_assignments(unit_assignment)
         elif type(assignments) == int:
             self.remember_assignment(assignments)
 

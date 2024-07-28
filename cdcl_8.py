@@ -62,9 +62,9 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
         return new_decision_level
     
     # -> override to also remember phase unit assignments
-    def remember_assignment(self, unit_assignment):
-        super().remember_assignment(unit_assignment)
-        self.phases[abs(unit_assignment)] = True if unit_assignment > 0 else False
+    def remember_assignment(self, assignment: int):
+        super().remember_assignment(assignment)
+        self.phases[abs(assignment)] = True if assignment > 0 else False
 
     # resets data structures
     def apply_restart(self):

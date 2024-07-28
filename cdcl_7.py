@@ -3,6 +3,7 @@ import random
 import time
 import copy
 from unit_propagate_using_lists import simplify
+from collections import deque
 
 class cdcl_watched_literals(cdcl_clause_learning):
     def __init__(self) -> None:
@@ -12,7 +13,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
     def reset_variables(self, formula):
         super().reset_variables(formula)
         # variables that are assigned and not yet propagated
-        self.assigned_and_not_processed_variables = []
+        self.assigned_and_not_processed_variables = deque()
         # 100%-certain assignments due to learned unit clauses
         self.certain_assignments = [] 
         # watched literals
@@ -41,8 +42,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
     def propagate(self):
         # propagate
         while len(self.assigned_and_not_processed_variables) > 0:
-            self.propagation_count += 1
-            new_assignment = self.assigned_and_not_processed_variables.pop()
+            new_assignment = self.assigned_and_not_processed_variables.popleft()
 
             watched_literal = -new_assignment
             # loop over clauses containing watched literal
@@ -68,18 +68,20 @@ class cdcl_watched_literals(cdcl_clause_learning):
                         # if other_watched_literal is false and we can't find another literal to watch -> conflict
                         if -other_watched_literal in self.decision_level_per_assigned_literal:
                             self.conflict_clause = clause
+                            # add "conflict" node to conflict graph
+                            self.update_conflict_graph()
+                            self.assigned_and_not_processed_variables = deque()
+                            return
                         # if other_watched_literal becomes unit -> remember and propagate
                         else:
-                            self.remember_assignments([other_watched_literal])
+                            self.propagation_count += 1
+                            self.remember_assignment(other_watched_literal)
                             self.update_conflict_graph([[clause,other_watched_literal]])
 
-        # add potential "conflict" node to conflict graph
-        self.update_conflict_graph([])
-
     # -> override to add unit assignments to assigned_and_not_processed_variables
-    def remember_assignment(self, unit_assignment):
-        super().remember_assignment(unit_assignment)
-        self.assigned_and_not_processed_variables.append(unit_assignment)
+    def remember_assignment(self, assignment: int):
+        super().remember_assignment(assignment)
+        self.assigned_and_not_processed_variables.append(assignment)
 
     # re-instantiates 100%-certain assignments due to learned unit clauses in all data structures
     def reinstantiate_certain_assignments(self):
@@ -95,7 +97,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
         # re-instantiate 100%-certain assignments due to learned unit clauses (backtracking might remove those too)
         self.reinstantiate_certain_assignments()
         # initiate complete unit propagation since there is a new learned clause
-        self.assigned_and_not_processed_variables = list(self.decision_level_per_assigned_literal.keys())
+        self.assigned_and_not_processed_variables = deque(sum(self.assignments,[]))
 
     # -> override to also instantiate watched literals for new learned clause
     def remember_learned_clause(self, learned_clause):

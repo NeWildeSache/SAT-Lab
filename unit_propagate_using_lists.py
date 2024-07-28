@@ -16,10 +16,11 @@ def unit_propagate(formula, return_assignments=False, count_propagations=False, 
             if not (-literal in assignments or literal in assignments):
                 unit_clause_indices_and_respective_units.append([index, literal])
                 assignments.append(literal)
-        # simplify formula with given assignments
-        formula = simplify(formula, assignments, placeholders_for_fulfilled_clauses=return_unit_clause_indices_and_respective_units)
-        # count propagations
-        num_propagations += 1
+                num_propagations += 1
+                formula = simplify(formula, [literal], placeholders_for_fulfilled_clauses=return_unit_clause_indices_and_respective_units)
+                if [] in formula:
+                    break
+
         # stop if nothing happens or unsat
         if old_formula == formula or [] in formula:
             break
