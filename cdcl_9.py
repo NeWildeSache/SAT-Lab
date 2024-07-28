@@ -11,14 +11,8 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     # -> override to add deleted_clause_count
     def reset_variables(self, formula):
         super().reset_variables(formula)
-        self.deleted_clause_count = 0
         # lbd scores of learned clauses: {clause: lbd_score}
         self.lbd_scores = []
-
-    # -> override to add deleted_clause_count
-    def get_statistics(self):
-        runtime = time.time()-self.time_start
-        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count, "restart_count": self.restart_count, "deleted_clause_count": self.deleted_clause_count}
 
     # minimizes learned clause 
     def minimize_learned_clause(self, learned_clause):
@@ -53,7 +47,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     def remember_learned_clause(self, learned_clause):
         super().remember_learned_clause(learned_clause)
         self.lbd_scores.append(self.lbd(learned_clause))
-        
+    
     # returns lbd score of clause
     def lbd(self,clause):
         unique_decision_levels = set()
@@ -61,16 +55,27 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
             unique_decision_levels.add(self.decision_level_per_assigned_literal[-literal])
         return len(unique_decision_levels)
     
+    # removes given clause from all data structures
+    def remove_clause(self,learned_clause):
+        self.known_clauses.remove(learned_clause)
+        clause_index = self.learned_clauses.index(learned_clause)
+        self.learned_clauses.pop(clause_index)
+        self.lbd_scores.pop(clause_index)
+        for _, watched_literal_information in self.watched_clauses.items():
+            for clause, other_watched_literal in watched_literal_information:
+                if clause == learned_clause:
+                    watched_literal_information.remove([clause,other_watched_literal])
+    
     # applies clause deletion using lbd score
     def delete_learned_clauses(self):
-        for learned_clause in copy.deepcopy(self.learned_clauses):
-            lbd = self.lbd_scores[learned_clause]
+        clauses_to_delete = []
+        for i, learned_clause in enumerate(self.learned_clauses):
+            lbd = self.lbd_scores[i]
             if lbd > self.max_lbd and lbd > 2:
                 self.deleted_clause_count += 1
-                self.known_clauses.remove(learned_clause)
-                clause_index = self.learned_clauses.index(learned_clause)
-                self.learned_clauses.pop(clause_index)
-                self.lbd_scores.pop(clause_index)
+                clauses_to_delete.append(learned_clause)
+        for learned_clause in clauses_to_delete:
+            self.remove_clause(learned_clause)
         self.max_lbd *= self.max_lbd_multiplier
 
     # -> override to add deletion of learned clauses

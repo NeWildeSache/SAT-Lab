@@ -2,6 +2,7 @@ from cdcl_6 import cdcl_clause_learning
 import random
 import time
 import copy
+from unit_propagate_using_lists import simplify
 
 class cdcl_watched_literals(cdcl_clause_learning):
     def __init__(self) -> None:
@@ -10,6 +11,8 @@ class cdcl_watched_literals(cdcl_clause_learning):
     # -> override to add extra data structures
     def reset_variables(self, formula):
         super().reset_variables(formula)
+        # variables that are assigned and not yet propagated
+        self.assigned_and_not_processed_variables = []
         # 100%-certain assignments due to learned unit clauses
         self.certain_assignments = [] 
         # watched literals
@@ -18,22 +21,21 @@ class cdcl_watched_literals(cdcl_clause_learning):
         for literal in self.unassigned_variables:
             self.watched_clauses[literal] = []
             self.watched_clauses[-literal] = []
-        for i, clause in enumerate(self.known_clauses):
-            self.init_watched_literals(clause,i)
-        # variables that are assigned and not yet propagated
-        self.assigned_and_not_processed_variables = []
 
     # sets watched literals for a clause
     # also checks if clause is unit -> add to certain_assignments and remember for propagation
-    def init_watched_literals(self,clause,index):
+    def init_watched_literals(self,clause):
         if len(clause) >= 2:
             literals_to_watch = random.sample(clause,2)
-            # remember [clause, clause_index, other_literal_watched_for_this_clause]
-            self.watched_clauses[literals_to_watch[0]].append([clause,index,literals_to_watch[1]])
-            self.watched_clauses[literals_to_watch[1]].append([clause,index,literals_to_watch[0]])
+            # remember [clause, other_literal_watched_for_this_clause]
+            self.watched_clauses[literals_to_watch[0]].append([clause,literals_to_watch[1]])
+            self.watched_clauses[literals_to_watch[1]].append([clause,literals_to_watch[0]])
         else:
             self.certain_assignments.append(clause[0])
-            self.remember_assignments(clause[0])
+            if -clause[0] not in self.certain_assignments:
+                self.remember_assignment(clause[0])
+            else:
+                self.sat = False
 
     # -> override to use watched literals
     def propagate(self):
@@ -44,7 +46,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
 
             watched_literal = -new_assignment
             # loop over clauses containing watched literal
-            for clause, clause_index, other_watched_literal in copy.deepcopy(self.watched_clauses[watched_literal]):
+            for clause, other_watched_literal in copy.deepcopy(self.watched_clauses[watched_literal]):
                 # if clause isn't already true because other_watched_literal is true
                 if not (other_watched_literal in self.decision_level_per_assigned_literal): 
                     # find new literal to watch
@@ -56,11 +58,11 @@ class cdcl_watched_literals(cdcl_clause_learning):
                             break
                     # if new watched literal is found -> set new watched literal
                     if new_watched_literal != None:
-                        self.watched_clauses[watched_literal].remove([clause, clause_index, other_watched_literal])
-                        for item in self.watched_clauses[other_watched_literal]:
-                            if clause_index == item[1]:
-                                item[2] = new_watched_literal
-                        self.watched_clauses[new_watched_literal].append([clause,clause_index,other_watched_literal])
+                        self.watched_clauses[watched_literal].remove([clause, other_watched_literal])
+                        for other_watched_literal_information in self.watched_clauses[other_watched_literal]:
+                            if clause == other_watched_literal_information[0]:
+                                other_watched_literal_information[1] = new_watched_literal
+                        self.watched_clauses[new_watched_literal].append([clause,other_watched_literal])
                     # if new watched literal isn't found
                     else:
                         # if other_watched_literal is false and we can't find another literal to watch -> conflict
@@ -69,7 +71,7 @@ class cdcl_watched_literals(cdcl_clause_learning):
                         # if other_watched_literal becomes unit -> remember and propagate
                         else:
                             self.remember_assignments([other_watched_literal])
-                            self.update_conflict_graph([[clause_index,other_watched_literal]])
+                            self.update_conflict_graph([[clause,other_watched_literal]])
 
         # add potential "conflict" node to conflict graph
         self.update_conflict_graph([])
@@ -98,12 +100,24 @@ class cdcl_watched_literals(cdcl_clause_learning):
     # -> override to also instantiate watched literals for new learned clause
     def remember_learned_clause(self, learned_clause):
         super().remember_learned_clause(learned_clause)
-        self.init_watched_literals(self.learned_clauses[-1],len(self.known_clauses)-1)
+        self.init_watched_literals(self.learned_clauses[-1])
+
+    # initialized watched literals for all known clauses, checks if 
+    def init_all_watched_literals(self):
+        for clause in self.known_clauses:
+            self.init_watched_literals(clause)
     
-    # -> override to remove input variables to propagate()
+    # -> override to remove input variables to propagate() and to add watched literals initialization and 
     def solve(self, formula):
+        # initialize variables
         self.time_start = time.time()
         self.reset_variables(formula)
+        self.init_all_watched_literals()
+
+        # formula might be unsat due to unit clauses already
+        if not self.sat:
+            self.write_proof()
+            return self.return_statement()
 
         # actual algorithm
         while len(self.unassigned_variables) > 0:
@@ -119,8 +133,9 @@ class cdcl_watched_literals(cdcl_clause_learning):
                 self.conflict_count += 1
                 # if conflict occurs at the root level -> unsat
                 if self.decision_level == 0:
-                    self.write_proof(sat=False)
-                    return self.return_statement(sat=False)
+                    self.sat = False
+                    self.write_proof()
+                    return self.return_statement()
                 # learn clause and figure out backtracking level
                 new_decision_level = self.analyze_conflict()
                 # backtrack
@@ -132,5 +147,5 @@ class cdcl_watched_literals(cdcl_clause_learning):
             self.apply_restart_policy()
 
         # return sat
-        self.write_proof(sat=True)
-        return self.return_statement(sat=True)
+        self.write_proof()
+        return self.return_statement()

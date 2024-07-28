@@ -13,10 +13,9 @@ class cdcl_clause_learning(cdcl):
 
     # adds unit assignments to conflict graph
     # also adds "conflict" node if conflict occurs
-    def update_conflict_graph(self, unit_clause_indices_and_respective_units):
+    def update_conflict_graph(self, unit_clause_information):
         # save implications in conflict graph
-        for unit_clause_index, unit_assignment in unit_clause_indices_and_respective_units:
-            clause_that_became_unit = self.known_clauses[unit_clause_index]
+        for clause_that_became_unit, unit_assignment in unit_clause_information:
             implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
             self.immediate_predecessors[unit_assignment] = implicating_literals
 
@@ -37,7 +36,8 @@ class cdcl_clause_learning(cdcl):
 
         self.remember_assignments(unit_assignments)
 
-        self.update_conflict_graph(unit_clause_indices_and_respective_units)
+        unit_clause_information = [[self.known_clauses[index], unit_assignment] for index, unit_assignment in unit_clause_indices_and_respective_units]
+        self.update_conflict_graph(unit_clause_information)
 
     # -> override to also backtrack conflict graph
     def backtrack(self, new_decision_level):

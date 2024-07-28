@@ -16,11 +16,13 @@ class cdcl:
         self.decision_count = 0
         self.conflict_count = 0
         self.learned_clause_count = 0
+        self.deleted_clause_count = 0
+        self.restart_count = 0
+        self.sat = True
 
         # init data structures
         self.decision_level = 0
         self.assignments = [[]]
-        self.implications = []
         self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True)
         self.num_literals = len(self.unassigned_variables)
         self.learned_clauses = []
@@ -46,8 +48,9 @@ class cdcl:
                 self.conflict_count += 1
                 # if conflict occurs at the root level -> unsat
                 if self.decision_level == 0:
-                    self.write_proof(sat=False)
-                    return self.return_statement(sat=False)
+                    self.sat = False
+                    self.write_proof()
+                    return self.return_statement()
                 # learn clause and figure out backtracking level
                 new_decision_level = self.analyze_conflict()
                 # backtrack
@@ -59,18 +62,18 @@ class cdcl:
             self.apply_restart_policy()
 
         # return sat
-        self.write_proof(sat=True)
-        return self.return_statement(sat=True)
+        self.write_proof()
+        return self.return_statement()
     
     # returns statistics for last solve run
     def get_statistics(self):
         runtime = time.time()-self.time_start
-        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count}
+        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count, "restart_count": self.restart_count, "deleted_clause_count": self.deleted_clause_count}
 
     # creates the return statement for the last solve run
-    def return_statement(self, sat):
-        return_statement = {"SAT": sat}
-        if sat: return_statement["model"] = self.assignments
+    def return_statement(self):
+        return_statement = {"SAT": self.sat}
+        if self.sat: return_statement["model"] = sum(self.assignments, [])
         return_statement.update(self.get_statistics())
         return return_statement
             
@@ -144,13 +147,13 @@ class cdcl:
         pass
 
     # writes proof in DRAT format
-    def write_proof(self, sat):
-        num_clauses = len(self.learned_clauses) + 1 if not sat else len(self.learned_clauses)
+    def write_proof(self):
+        num_clauses = len(self.learned_clauses) + 1 if not self.sat else len(self.learned_clauses)
 
         file_name = "proof.drat"
         with open(file_name, "w") as file:
             file.write("p cnf " + str(self.num_literals) + " " + str(num_clauses) + "\n")
             for learned_clause in self.learned_clauses:
                 file.write(" ".join(map(str,learned_clause)) + " 0\n")
-            if not sat:
+            if not self.sat:
                 file.write("0\n")
