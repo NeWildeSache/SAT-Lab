@@ -2,7 +2,7 @@ from unit_propagate_using_lists import unit_propagate
 from formula_preprocessing import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination
 import time
 
-def davis_putnam(formula):
+def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_elimination=True, use_subsumption=True, use_tautology_elimination=True, use_double_elimination=True):
     time_start = time.time()
     while True:
         propagation_count = 0
@@ -13,14 +13,20 @@ def davis_putnam(formula):
         # Preprocessing
         while True:
             len_before = len(formula)
-            formula, extra_propagations = unit_propagate(formula, count_propagations=True)
-            propagation_count += extra_propagations
+            if use_unit_propagation:
+                formula, extra_propagations = unit_propagate(formula, count_propagations=True)
+                propagation_count += extra_propagations
 
-            formula = remove_doubles(remove_tautologies(formula))
-            formula, extra_eliminations = pure_literal_elimination(formula, True)
-            formula, extra_subsumptions = subsumption(formula, True)
-            elimination_count += extra_eliminations
-            subsumption_count += extra_subsumptions
+            if use_tautology_elimination:
+                formula = remove_tautologies(formula)
+            if use_double_elimination:
+                formula = remove_doubles(formula)
+            if use_pure_literal_elimination:
+                formula, extra_eliminations = pure_literal_elimination(formula, True)
+                elimination_count += extra_eliminations
+            if use_subsumption:
+                formula, extra_subsumptions = subsumption(formula, True)
+                subsumption_count += extra_subsumptions
 
             if len(formula) == len_before:
                 break

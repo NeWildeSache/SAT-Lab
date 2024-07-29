@@ -40,23 +40,25 @@ def pebbling_cnf(n):
         return v*2 + c + 1
 
     # adjust n to fit pyramidal graph
-    k=1
+    # k = number of nodes in the lowest row
+    k=1 
     while k*(k+1)/2 < n:
         k+=1
     n = int(k*(k+1)/2)
-
+    
     # final formula
     pebbling = []
 
-    # remember predecessors
+    # remember predecessors for each node
+    # first find out which nodes are in each row
     predecessors = {}
     nodes_per_row = []
-    k = 4
     largest_node_in_current_row = 0
     for num_nodes_in_row in reversed(range(1,k+1)):
         nodes_per_row.append(list(range(largest_node_in_current_row,largest_node_in_current_row+num_nodes_in_row)))
         largest_node_in_current_row += num_nodes_in_row
 
+    # now find predecessors
     for row_index, row in enumerate(nodes_per_row):
         if row_index == 0: continue
         for node_index, node in enumerate(row):

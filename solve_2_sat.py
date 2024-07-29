@@ -5,7 +5,7 @@ import time
 def solve_2_sat(formula):
     time_start = time.time()
     # do initial unit propagation
-    formula, assignments, num_propagations = unit_propagate(copy.deepcopy(formula), return_assignments=True, count_propagations=True)
+    formula, assignments, propagation_count = unit_propagate(copy.deepcopy(formula), return_assignments=True, count_propagations=True)
     num_decisions = 0
 
     while len(formula) > 0 and not [] in formula:
@@ -17,7 +17,7 @@ def solve_2_sat(formula):
         new_assignments.extend(unit_assignments)
         # update statistics
         num_decisions = num_decisions + 1
-        num_propagations = num_propagations + extra_propagations
+        propagation_count = propagation_count + extra_propagations
 
         if [] in new_formula:
             # try True instead
@@ -26,7 +26,7 @@ def solve_2_sat(formula):
             new_assignments.extend(unit_assignments)
             # update statistics
             num_decisions = num_decisions + 1
-            num_propagations = num_propagations + extra_propagations
+            propagation_count = propagation_count + extra_propagations
 
         # use simplified formula with new assignments
         assignments.extend(new_assignments)
@@ -38,6 +38,6 @@ def solve_2_sat(formula):
         sat = True
 
     time_spent = time.time() - time_start
-    return_dict = {"SAT": sat, "runtime": time_spent, "num_decisions": num_decisions, "num_propagations": num_propagations}
+    return_dict = {"SAT": sat, "runtime": time_spent, "num_decisions": num_decisions, "propagation_count": propagation_count}
     if sat: return_dict["model"] = assignments
     return return_dict
