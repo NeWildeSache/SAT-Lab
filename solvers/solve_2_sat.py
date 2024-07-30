@@ -1,6 +1,8 @@
-from unit_propagate_using_lists import unit_propagate, simplify
+from solvers.unit_propagate import unit_propagate, simplify
+from .utils import read_dimacs
 import copy
 import time
+import argparse
 
 def solve_2_sat(formula):
     time_start = time.time()
@@ -41,3 +43,18 @@ def solve_2_sat(formula):
     return_dict = {"SAT": sat, "runtime": time_spent, "num_decisions": num_decisions, "propagation_count": propagation_count}
     if sat: return_dict["model"] = assignments
     return return_dict
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="2-SAT Solver")
+    parser.add_argument("path", nargs="?", default="random_cnf.cnf")
+    args=parser.parse_args()
+    path = args.path
+    formula = read_dimacs(path)
+    stats = solve_2_sat(formula)
+    print("s", "SATISFIABLE" if stats["SAT"] else "UNSATISFIABLE")
+    if stats["SAT"]:
+        print("v", " ".join([str(l) for l in stats["model"]]))
+    print("c", "Runtime:", stats["runtime"])
+    print("c", "Number of Decisions:", stats["num_decisions"])
+    print("c", "Number of Propagations:", stats["propagation_count"])
+    

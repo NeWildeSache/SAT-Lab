@@ -57,31 +57,10 @@ def simplify(formula, assignments, placeholders_for_fulfilled_clauses=False):
         formula = [clause for i, clause in enumerate(formula) if i not in clauses_to_remove]
     return formula
 
-
+# if assignments is a list of lists, it will be flattened
 def validated_assignments(assignments):
     if len(assignments) != 0:
         if type(assignments[0]) == list:
             return sum(assignments, [])
     return assignments
-
-
-# TESTING
-if __name__ == "__main__":
-    unsat_formula = [[1],[-1],[3,4]]
-    print(unsat_formula)
-    unsat_formula, assignments = unit_propagate(unsat_formula)
-    print(unsat_formula)
-
-    sat_formula = [[1],[-1,2]]
-    print(sat_formula)
-    sat_formula, assignments = unit_propagate(sat_formula)
-    print(sat_formula)
-
-    formula_with_remains = [[1],[-1,2],[3,4]]
-    print(formula_with_remains)
-    formula_with_remains, assignments = unit_propagate(formula_with_remains)
-    print(formula_with_remains)
-
-    formula_to_test_simplify = [[1,2,3],[-2,-3],[-3,-2],[2,3]]
-    print(simplify(formula_to_test_simplify, [-1,-2,-3]))
 

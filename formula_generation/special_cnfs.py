@@ -1,6 +1,6 @@
 from itertools import combinations
 import argparse
-from random_cnf import convert_to_dimacs
+from .random_cnf import convert_to_dimacs
 import sys
 
 def pigeonhole_cnf(n):

@@ -1,8 +1,7 @@
-from cdcl_6 import cdcl_clause_learning 
+from solvers.cdcl_clause_learning import cdcl_clause_learning 
 import random
 import time
 import copy
-from unit_propagate_using_lists import simplify
 from collections import deque
 
 class cdcl_watched_literals(cdcl_clause_learning):

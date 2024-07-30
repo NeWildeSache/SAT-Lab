@@ -1,5 +1,5 @@
-from unit_propagate_using_lists import unit_propagate, simplify
-from formula_preprocessing import pure_literal_elimination, get_unique_literals_in_formula
+from solvers.unit_propagate import unit_propagate, simplify
+from solvers.utils import pure_literal_elimination, get_unique_literals_in_formula
 import random
 import copy
 import gc

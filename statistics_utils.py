@@ -1,5 +1,5 @@
 from pysat.solvers import Cadical103
-from random_cnf import random_cnf
+from formula_generation import random_cnf
 import numpy as np
 import math
 import copy
@@ -10,7 +10,7 @@ import multiprocessing
 
 # allows computation and plotting of statistics for multiple solvers
 class StatisticsModule():
-    def __init__(self, k=3, c_multiplier=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=45, use_timeouts=True, averaging_function=np.mean):
+    def __init__(self, k=3, c_multiplier=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=60, use_timeouts=True, averaging_function=np.mean):
         self.k = k
         self.c_multiplier = c_multiplier    
         self.seed = seed
@@ -177,25 +177,3 @@ class StatisticsModule():
     def plot_multiple_statistics(self,statistics_per_n,n_values,statistics=["runtime"]):
         for statistic in statistics:
             self.plot_statistic(statistics_per_n,n_values,statistic)
-
-
-
-# simple correctness test, used for debugging
-if __name__ == "__main__":
-    from solve_2_sat import solve_2_sat
-    from davis_putnam import davis_putnam
-    from dpll import dpll
-    from cdcl import cdcl 
-    from cdcl_6 import cdcl_clause_learning 
-    from cdcl_7 import cdcl_watched_literals 
-    from cdcl_8 import cdcl_decision_heuristics_and_restarts 
-    from cdcl_9 import cdcl_clause_minimization_and_deletion
-    
-    solvers = [dpll,davis_putnam,cdcl,cdcl_clause_learning,cdcl_watched_literals,cdcl_decision_heuristics_and_restarts,cdcl_clause_minimization_and_deletion]
-    solvers = [cdcl_clause_minimization_and_deletion]
-    stats_module = StatisticsModule(check_correctness=True)
-    for n,c,k in [(10,38,3)]:
-            for solver in solvers:
-                stats_module.solver_statistics(n,c,k,solver)
-
-    print("All tests passed!")

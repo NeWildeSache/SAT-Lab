@@ -1,4 +1,4 @@
-from cdcl_8 import cdcl_decision_heuristics_and_restarts
+from solvers.cdcl_decision_heuristics_and_restarts import cdcl_decision_heuristics_and_restarts
 
 class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restarts):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True, max_lbd=7, max_lbd_multiplier=1.1) -> None:

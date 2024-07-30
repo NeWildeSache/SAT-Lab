@@ -1,5 +1,5 @@
-from unit_propagate_using_lists import unit_propagate, simplify
-from cdcl import cdcl
+from solvers.unit_propagate import unit_propagate, simplify
+from solvers.cdcl import cdcl
 import copy
 
 class cdcl_clause_learning(cdcl):

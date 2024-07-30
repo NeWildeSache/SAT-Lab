@@ -1,5 +1,17 @@
 from itertools import combinations
 
+# reads dimacs file and returns formula as list of lists
+def read_dimacs(path):
+    with open(path, "r") as file:
+        lines = file.readlines()
+    formula = []
+    for line in lines:
+        if line[0] == "c" or line[0] == "p":
+            continue
+        clause = [int(l) for l in line.split()[:-1]]
+        formula.append(clause)
+    return formula
+
 # returns formula without tautological clauses
 def remove_tautologies(formula):
     if len(formula) == 0:
@@ -77,6 +89,7 @@ def subsumption(formula, count_subsumptions=False):
         return formula
 
 
+# Testing
 if __name__ == "__main__":
     formula = [[1,2,3],[-2,-3],[-3,-2],[2,3],[2,-2]]
     print(f"Original formula: {formula}")

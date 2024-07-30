@@ -1,5 +1,5 @@
-from cdcl_7 import cdcl_watched_literals 
-from formula_preprocessing import get_unique_literals_in_formula
+from solvers.cdcl_watched_literals import cdcl_watched_literals 
+from solvers.utils import get_unique_literals_in_formula
 
 class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True) -> None:

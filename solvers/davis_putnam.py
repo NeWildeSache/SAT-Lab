@@ -1,6 +1,7 @@
-from unit_propagate_using_lists import unit_propagate
-from formula_preprocessing import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination
+from solvers.unit_propagate import unit_propagate
+from solvers.utils import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination, read_dimacs
 import time
+import argparse
 
 def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_elimination=True, use_subsumption=True, use_tautology_elimination=True, use_double_elimination=True):
     time_start = time.time()
@@ -66,3 +67,19 @@ def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_eliminatio
         # add resolved clauses
         formula = formula + resolved_clauses
         added_clause_count = added_clause_count + len(resolved_clauses)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Davis Putnam SAT Solver")
+    parser.add_argument("path", nargs="?", default="random_cnf.cnf")
+    args=parser.parse_args()
+    path = args.path
+    formula = read_dimacs(path)
+    stats = davis_putnam(formula)
+    print("s", "SATISFIABLE" if stats["SAT"] else "UNSATISFIABLE")
+    if stats["SAT"]:
+        print("v", " ".join([str(l) for l in stats["model"]]))
+    print("c", "Runtime:", stats["runtime"])
+    print("c", "Number of Propagations:", stats["propagation_count"])
+    print("c", "Number of Added Clauses:", stats["added_clause_count"])
+    print("c", "Number of Eliminations:", stats["elimination_count"])
+    print("c", "Number of Subsumptions:", stats["subsumption_count"])
