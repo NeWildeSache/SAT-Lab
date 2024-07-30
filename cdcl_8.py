@@ -25,7 +25,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def get_decision_variable(self):
         if self.use_decision_heuristics:
             # return random decision variable every 200 conflicts
-            if self.current_conflict_count % self.random_decision_frequency == 0:
+            if self.conflict_count % self.random_decision_frequency == 0:
                 return super().get_decision_variable()
             
             # get decision variable with highest vsids score

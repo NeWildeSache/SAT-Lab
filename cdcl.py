@@ -18,6 +18,7 @@ class cdcl:
         self.learned_clause_count = 0
         self.deleted_clause_count = 0
         self.restart_count = 0
+        self.minimized_clause_count = 0
         self.sat = True
 
         # init data structures
@@ -68,7 +69,10 @@ class cdcl:
     # returns statistics for last solve run
     def get_statistics(self):
         runtime = time.time()-self.time_start
-        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count, "restart_count": self.restart_count, "deleted_clause_count": self.deleted_clause_count}
+        return {"runtime": runtime, "propagation_count": self.propagation_count, "decision_count": self.decision_count, 
+                "conflict_count": self.conflict_count, "learned_clause_count": self.learned_clause_count, 
+                "restart_count": self.restart_count, "deleted_clause_count": self.deleted_clause_count, 
+                "minimized_clause_count": self.minimized_clause_count}
 
     # creates the return statement for the last solve run
     def return_statement(self):

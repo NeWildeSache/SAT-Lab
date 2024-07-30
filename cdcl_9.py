@@ -27,7 +27,9 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
                 # if yes -> remove literal from learned clause
                 if all_predecessors_within_learned_clause:
                     literals_to_delete.add(literal)
+        # minimize learned clause if possible
         if len(literals_to_delete) > 0:
+            self.minimized_clause_count += 1
             learned_clause = [l for l in learned_clause if l not in literals_to_delete]
         return learned_clause
 
