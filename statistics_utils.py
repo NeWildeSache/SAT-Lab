@@ -10,9 +10,9 @@ import multiprocessing
 
 # allows computation and plotting of statistics for multiple solvers
 class StatisticsModule():
-    def __init__(self, k=3, c_multiplier=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=60, use_timeouts=True, averaging_function=np.mean):
+    def __init__(self, k=3, gamma=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=60, use_timeouts=True, averaging_function=np.mean):
         self.k = k
-        self.c_multiplier = c_multiplier    
+        self.gamma = gamma    
         self.seed = seed
         self.num_tests = num_tests
         self.print_solving_information = print_solving_information
@@ -24,14 +24,18 @@ class StatisticsModule():
         self.print_progress = print_progress
 
     # creates self.num_tests random formulas and solves them with the given solver
-    # returns a dictionary with the statistics of the solver
+    # returns a dictionary with the statistics of the solver ({statistic: [values]})
     # if check_correctness is True, the solver is compared to cadical
     def solver_statistics(self,n,solver,solver_args={},c=None,k=None): 
         statistics = {}
+        c = math.ceil(n*self.gamma) if c == None else c
+        k = self.k if k == None else k
+
+        # create formula seeds using a general seed
         np.random.seed(self.seed)
         formula_seeds = np.random.randint(0,self.num_tests*1000,size=self.num_tests)
-        c = math.ceil(n*self.c_multiplier) if c == None else c
-        k = self.k if k == None else k
+
+        # test solver on multiple formulas
         for formula_seed in formula_seeds:
             # generate random formula
             if self.formula_creator == random_cnf:
@@ -39,6 +43,7 @@ class StatisticsModule():
             else:
                 formula = self.formula_creator(n)
             if formula == None: break
+
             # solve formula
             if isinstance(solver,type): # check if solver is a class
                 solver_instance = solver(**solver_args)
@@ -47,12 +52,13 @@ class StatisticsModule():
                 outputs = solver(formula)
             solver_sat = outputs["SAT"]
 
+            # add statistics to dictionary, each entry contains a list with the values of all tests
             for key in outputs.keys():
-                if key != "SAT":
-                    if key not in statistics:
-                        statistics[key] = []
-                    statistics[key].append(outputs[key])
+                if key not in statistics:
+                    statistics[key] = []
+                statistics[key].append(outputs[key])
 
+            # get cadical result for comparison (if check_correctness is True)
             if self.check_correctness:
                 cadical = Cadical103()
                 cadical.append_formula(formula)
@@ -68,6 +74,7 @@ class StatisticsModule():
                 if solver_sat: print(f"solver model: {outputs["model"]}")
                 if self.check_correctness and cadical_sat: print(f"cadical model: {cadical.get_model()}")
 
+            # assert correctness
             if self.check_correctness: assert solver_sat == cadical_sat
 
         return statistics
@@ -85,15 +92,17 @@ class StatisticsModule():
             key += ")"
         return key
 
-    # returns a dictionary with the statistics of multiple solvers
+    # returns a dictionary with the statistics of multiple solvers ({solver: {statistics_dict: [values]}})
     # if self.use_timeouts is True, the solver is run in a separate process and terminated if it takes too long
     # the timeout threshold is set by self.timeout_threshold
     # if return_timeouts is True, also returns a list of indices of solvers that took too long
     def get_statistics_for_multiple_solvers(self,n,solvers,solver_args=[],return_timeouts=False):
+        # initialize solver_args if not given
         if solver_args == []:
             solver_args = [{} for _ in range(len(solvers))]
         statistics = {}
         solvers_that_took_too_long = []
+        # get statistics for each solver
         for i, (solver, args) in tqdm(enumerate(zip(solvers,solver_args)),total=len(solvers),disable=not self.print_progress):
             if self.use_timeouts:
                 pool = multiprocessing.Pool(processes=1)
@@ -106,13 +115,14 @@ class StatisticsModule():
                     pool.terminate()
             else:
                 statistics[self.get_key_for_solver_with_args(solver,args)] = self.solver_statistics(n,solver,args)
+        # return statistics
         if self.print_progress: clear_output() # clear tqdm output
         if return_timeouts:
             return statistics, solvers_that_took_too_long
         else:
             return statistics
 
-    # returns a dictionary with the statistics of multiple solvers for multiple n values
+    # returns a dictionary with the statistics of multiple solvers for multiple n values ({n: {solver: {statistics_dict: [values]}}})
     def get_statistics_for_multiple_n(self,n_values,solvers,solver_args=[]):
         solvers = copy.deepcopy(solvers)
         statistics = {}
@@ -127,6 +137,7 @@ class StatisticsModule():
         return statistics
     
     # averages the statistics of a solver 
+    # {n: {solver: {statistics_dict: [values]}}} -> {n: {solver: {statistics_dict: [average_value]}}}
     def average_statistics(self,statistics):
         if statistics == {}: return statistics
         statistics = copy.deepcopy(statistics)
@@ -135,16 +146,16 @@ class StatisticsModule():
                 statistics[key] = self.average_statistics(statistics[key])
         elif type(list(statistics.values())[0]) == list:
             for key in statistics.keys():
-                if isinstance(statistics[key][0], (int, float, complex)):
+                if isinstance(statistics[key][0], (int, float, complex, bool)):
                     statistics[key] = self.averaging_function(statistics[key])
         return statistics
 
-    # returns a dictionary with averaged statistics of multiple solvers for multiple n values
+    # returns a dictionary with averaged statistics of multiple solvers for multiple n values ({n: {solver: {statistics_dict: [average_value]}}})
     def get_average_statistics_for_multiple_n(self,n_values,solvers,solver_args=[]):
         statistics = self.get_statistics_for_multiple_n(n_values,solvers,solver_args=solver_args)
         return self.average_statistics(statistics)
 
-    # returns a dictionary with solver_name: [values] for a specific statistic
+    # returns a dictionary with {solver_name: [values]} for a specific statistic
     # this means that the values are grouped by solver and not by n
     def get_values_per_solver(self,statistics_per_n,n_values,statistic="runtime"):
         values = {}
@@ -168,7 +179,7 @@ class StatisticsModule():
         plt.ylabel(statistic)
         plt.legend()
         if title == "":
-            plt.title(statistic + f" per solver for different n (k={self.k}, c={self.c_multiplier}n)" + title_addition)
+            plt.title(statistic + f" per solver for different n (k={self.k}, c={self.gamma}n)" + title_addition)
         else:
             plt.title(title)
         plt.show()
