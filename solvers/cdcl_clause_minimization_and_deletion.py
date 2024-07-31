@@ -3,14 +3,13 @@ from solvers.cdcl_decision_heuristics_and_restarts import cdcl_decision_heuristi
 class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restarts):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True, max_lbd=7, max_lbd_multiplier=1.1) -> None:
         super().__init__(random_decision_frequency, vsids_multiplier, c, use_decision_heuristics, use_restarts)
-        self.max_lbd = max_lbd
-        self.max_lbd_multiplier = max_lbd_multiplier
+        self.max_lbd = max_lbd # deletion threshold for learned clauses based on lbd score
+        self.max_lbd_multiplier = max_lbd_multiplier # factor to multiply max_lbd with
 
     # -> override to add deleted_clause_count
     def reset_variables(self, formula):
         super().reset_variables(formula)
-        # lbd scores of learned clauses, uses same order as self.learned_clauses
-        self.lbd_scores = []
+        self.lbd_scores = []  # lbd scores of learned clauses, uses same order as self.learned_clauses
 
     # minimizes learned clause 
     def minimize_learned_clause(self, learned_clause):
@@ -55,7 +54,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
             unique_decision_levels.add(self.decision_level_per_assigned_literal[-literal])
         return len(unique_decision_levels)
     
-    # removes given clause from all data structures
+    # removes given learned clause from all data structures
     def remove_clause(self,learned_clause):
         self.known_clauses.remove(learned_clause)
         clause_index = self.learned_clauses.index(learned_clause)

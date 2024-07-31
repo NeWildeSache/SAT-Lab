@@ -10,7 +10,7 @@ class cdcl:
 
     # resets/initializes all variables
     def reset_variables(self, formula):
-        self.formula = copy.deepcopy(formula)
+        self.formula = copy.deepcopy(formula) # = original formula
         self.known_clauses = copy.deepcopy(formula) # = original formula + learned clauses
         self.propagation_count = 0
         self.decision_count = 0
@@ -23,11 +23,11 @@ class cdcl:
 
         # init data structures
         self.decision_level = 0
-        self.assignments = [[]]
-        self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True)
+        self.assignments = [[]] # [[decision_level_0_assignments],[decision_level_1_assignments],[decision_level_2_assignments],...]
+        self.unassigned_variables = get_unique_literals_in_formula(self.known_clauses, only_positive=True) 
         self.num_literals = len(self.unassigned_variables)
         self.learned_clauses = []
-        self.decision_level_per_assigned_literal = {}
+        self.decision_level_per_assigned_literal = {} # {literal: decision_level} -> also helpful for O(1) lookups if literal is assigned
         self.conflict_clause = None
 
     # main function to solve formula
@@ -81,7 +81,7 @@ class cdcl:
         return_statement.update(self.get_statistics())
         return return_statement
             
-    # returns the new decision variable
+    # returns the new decision variable using random variable and polarity
     def get_decision_variable(self):
         decision_variable = random.sample(self.unassigned_variables,1)[0]
         return decision_variable if random.choice([True,False]) else -decision_variable

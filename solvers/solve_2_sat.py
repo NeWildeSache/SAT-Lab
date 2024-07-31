@@ -1,4 +1,4 @@
-from solvers.unit_propagate import unit_propagate, simplify
+from .unit_propagate import unit_propagate, simplify
 from .utils import read_dimacs
 import copy
 import time
@@ -44,6 +44,7 @@ def solve_2_sat(formula):
     if sat: return_dict["model"] = assignments
     return return_dict
 
+# run this from parent folder using "python -m solvers.solve_2_sat <path>"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2-SAT Solver")
     parser.add_argument("path", nargs="?", default="random_cnf.cnf")

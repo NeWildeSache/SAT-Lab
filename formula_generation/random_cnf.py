@@ -53,6 +53,7 @@ def random_cnf(n,c,k,seed=42):
         i = i+1
     return formula
 
+# run this from parent folder using "python -m formula_generation.random_cnf <n> <c> <k>"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="n c k random cnf generator")
     parser.add_argument("num_variables", nargs="?", default="50")
@@ -63,6 +64,8 @@ if __name__ == "__main__":
     c = int(args.num_clauses)
     k = int(args.num_literals)
     formula = random_cnf(n,c,k)
+    if formula is None:
+        exit()
     output = convert_to_dimacs(formula,n,c)
     print(output)
     # write to file

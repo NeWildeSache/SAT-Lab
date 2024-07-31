@@ -108,14 +108,15 @@ class cdcl_watched_literals(cdcl_clause_learning):
         for clause in self.known_clauses:
             self.init_watched_literals(clause)
     
-    # -> override to remove input variables to propagate() and to add watched literals initialization and 
+    # -> override to remove input variables to propagate() + to add watched literals initialization 
+    # + to ensure correctness with formulas that are unsat due to unit clauses
     def solve(self, formula):
         # initialize variables
         self.time_start = time.time()
         self.reset_variables(formula)
         self.init_all_watched_literals()
 
-        # formula might be unsat due to unit clauses already
+        # formula might be unsat due to unit clauses already -> need to check because then self.unassigned_variables is empty so the while loop below wouldn't run
         if not self.sat:
             self.write_proof()
             return self.return_statement()

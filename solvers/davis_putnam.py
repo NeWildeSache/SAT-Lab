@@ -68,6 +68,7 @@ def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_eliminatio
         formula = formula + resolved_clauses
         added_clause_count = added_clause_count + len(resolved_clauses)
 
+# run this from parent folder using "python -m solvers.davis_putnam <path>"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Davis Putnam SAT Solver")
     parser.add_argument("path", nargs="?", default="random_cnf.cnf")

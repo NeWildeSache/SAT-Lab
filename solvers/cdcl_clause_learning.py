@@ -19,23 +19,26 @@ class cdcl_clause_learning(cdcl):
             implicating_literals = [-literal for literal in clause_that_became_unit if literal != unit_assignment]
             self.immediate_predecessors[unit_assignment] = implicating_literals
 
-        # save possible conflicts in conflict graph (overwrites old values so no backtrack needed)
+        # save possible conflicts in conflict graph
         if self.conflict_clause != None:
             implicating_literals = [-literal for literal in self.conflict_clause]
             self.immediate_predecessors["conflict"] = implicating_literals
 
     # -> override to also update conflict graph
     def propagate(self, formula):
+        # unit propagate
         self.formula, unit_assignments, extra_propagations, unit_clause_indices_and_respective_units = unit_propagate(
             simplify(formula,self.assignments, placeholders_for_fulfilled_clauses=True),
             return_assignments=True,count_propagations=True,return_unit_clause_indices_and_respective_units=True)
         self.propagation_count += extra_propagations
 
+        self.remember_assignments(unit_assignments)
+
+        # set conflict clause if conflict occurs
         if [] in self.formula:
             self.conflict_clause = self.known_clauses[self.formula.index([])]
 
-        self.remember_assignments(unit_assignments)
-
+        # update conflict graph
         unit_clause_information = [[self.known_clauses[index], unit_assignment] for index, unit_assignment in unit_clause_indices_and_respective_units]
         self.update_conflict_graph(unit_clause_information)
 
@@ -46,7 +49,7 @@ class cdcl_clause_learning(cdcl):
             if decision_level > new_decision_level:
                 del self.decision_level_per_assigned_literal[literal]
         for _ in range(self.decision_level-new_decision_level):
-            # update assignments
+            # backtrack assignments
             decision_level_assignments = self.assignments.pop()
             for literal in decision_level_assignments:
                 # backtrack conflict graph
@@ -54,7 +57,7 @@ class cdcl_clause_learning(cdcl):
                 for predecessors in self.immediate_predecessors.values():
                     if literal in predecessors:
                         predecessors.remove(literal)
-                # update unassigned variables 
+                # backtrack unassigned variables 
                 self.unassigned_variables.append(abs(literal))
         self.decision_level = new_decision_level
         self.conflict_clause = None

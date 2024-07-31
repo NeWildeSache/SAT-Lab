@@ -4,11 +4,11 @@ from solvers.utils import get_unique_literals_in_formula
 class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True) -> None:
         super().__init__()
-        self.random_decision_frequency = random_decision_frequency
-        self.vsdids_multiplier = vsids_multiplier
-        self.c = c
-        self.use_decision_heuristics = use_decision_heuristics
-        self.use_restarts = use_restarts
+        self.random_decision_frequency = random_decision_frequency # every x conflicts a random decision variable is chosen
+        self.vsdids_multiplier = vsids_multiplier # factor to multiply vsids scores with
+        self.c = c # influences restart frequency -> lower c = more restarts
+        self.use_decision_heuristics = use_decision_heuristics 
+        self.use_restarts = use_restarts 
 
     # -> override to add vsids scores, phases, luby sequence and restart count
     def reset_variables(self, formula):

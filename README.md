@@ -11,11 +11,11 @@ This module allows for generating random formulas, pebbling formulas and pigeonh
 This module contains all solvers and some necessary util functions.
 
 ### tasks
-This module contains all the tasks of the different lab sessions.
+This folder contains all the tasks of the different lab sessions.
 
 ### benchmarks.ipynb and test_solver.py
 benchmarks does a statistical analysis of different solvers and therefore fulfills the tasks at the end of every lab session and the lab 11.
-test_solver.py contains a class that facilitates the analyses in the benchmarks notebook
+test_solver.py contains a class that facilitates the analyses in the benchmarks notebook.
 
 ## Getting started
 To run all code, it would be advisable to install a fresh python environment and include all packages specified in the requirements.txt or environment.yml file. This can be automatically done using pip:

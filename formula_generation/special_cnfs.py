@@ -1,7 +1,6 @@
 from itertools import combinations
 import argparse
 from .random_cnf import convert_to_dimacs
-import sys
 
 def pigeonhole_cnf(n):
     # n+1 pigeons, n holes
@@ -12,6 +11,11 @@ def pigeonhole_cnf(n):
     # -> each pigeon gets n numbers, offset by 1 so first variable is 1 and not 0
     def get_pigeonhole_variable(i,j):
         return i*n + j + 1
+
+    # stop for wrong input
+    if n <= 0:
+        print("Invalid input")
+        return None
 
     pigeonhole = []
 
@@ -38,6 +42,11 @@ def pebbling_cnf(n):
     # -> each node gets 2 numbers, offset by 1 so first variable is 1 and not 0
     def get_pebbling_variable(v,c):
         return v*2 + c + 1
+    
+    # stop for wrong input
+    if n <= 0:
+        print("Invalid input")
+        return None
 
     # adjust n to fit pyramidal graph
     # k = number of nodes in the lowest row
@@ -82,7 +91,7 @@ def pebbling_cnf(n):
 
     return pebbling
 
-
+# run this from parent folder using "python -m formula_generation.special_cnfs <type> <n>"
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="special formula generator, supports 'pigeonhole','pebbling' as arguments for type")
     parser.add_argument("type", nargs="?",default="pigeonhole")
@@ -98,7 +107,9 @@ if __name__ == "__main__":
         formula = pebbling_cnf(n)
     else:
         print("Unsupported type!")
-        sys.exit()
+        exit()
+    if formula is None:
+        exit()
     output = convert_to_dimacs(formula,num_variables,len(formula))
     print(output)
     # write to file
