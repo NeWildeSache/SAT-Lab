@@ -31,6 +31,8 @@ def remove_doubles(formula):
     return formula
 
 # returns formula without pure literals
+# if count_eliminations is True, the number of eliminations will be returned
+# if return_assignments is True, the assignments will be returned
 def pure_literal_elimination(formula, count_eliminations=False, return_assignments=False):
     pure_literals = []
     original_length = len(formula)
@@ -55,6 +57,7 @@ def pure_literal_elimination(formula, count_eliminations=False, return_assignmen
     return return_statement
     
 # returns unique literals in formula
+# if only_positive is True, only positive literals are returned
 def get_unique_literals_in_formula(formula, only_positive=False):
     flattened_formula = sum(formula, [])
     # return literals only in positive form

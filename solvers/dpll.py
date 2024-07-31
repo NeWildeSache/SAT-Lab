@@ -29,6 +29,7 @@ class dpll:
         self.decision_count = 0
         self.sat = False
 
+    # actual recursive dpll function
     def dpll_step(self, assignments):
         # get formula with current assignments
         simplified_formula = simplify(copy.deepcopy(self.formula), assignments)

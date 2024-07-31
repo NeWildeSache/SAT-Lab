@@ -1,5 +1,9 @@
 import copy
 
+# performs unit propagation on a formula until no more unit clauses are present
+# if return_assignments is True, the assignments will be returned
+# if count_propagations is True, the number of propagations will be returned
+# if return_unit_clause_indices_and_respective_units is True, the indices of the unit clauses and the respective literals that were assigned will be returned
 def unit_propagate(formula, return_assignments=False, count_propagations=False, return_unit_clause_indices_and_respective_units=False):
     # preprocess
     assignments = []
@@ -36,8 +40,11 @@ def unit_propagate(formula, return_assignments=False, count_propagations=False, 
         return_statement.append(unit_clause_indices_and_respective_units)
     return return_statement
 
-# simplifies a formula given an assignment
-# also works if only one assignment was given (e.g. x=0 is explicitly stated but !x=1 isn't)
+# simplifies a formula given an assignment but doesn't apply any unit propagations
+# also works for implied assignments (e.g. x=0 is explicitly stated but !x=1 isn't)
+# e.g. simplify([[1, 2], [-1, 3], [2, 3]], [1]) -> [[3], [2, 3]]
+# if placeholders_for_fulfilled_clauses is True, the clauses that are fulfilled by the assignment will be replaced by the string "True"
+# e.g. simplify([[1, 2], [-1, 3], [2, 3]], [1], placeholders_for_fulfilled_clauses=True) -> ['True', [3], [2, 3]]
 def simplify(formula, assignments, placeholders_for_fulfilled_clauses=False):
     assignments = validated_assignments(assignments)
     
