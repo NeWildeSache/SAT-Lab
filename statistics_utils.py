@@ -179,7 +179,7 @@ class StatisticsModule():
         return "\n".join(textwrap.wrap(title, max_line_length))
 
     # plots a statistic for multiple solvers for multiple n values
-    def plot_statistic(self,statistics_per_n,n_values,statistic="runtime",title_addition="",title="",yscale="log",ax=None):
+    def plot_statistic(self,statistics_per_n,n_values,statistic="runtime",title_addition="",title="",yscale="log",ax=None,labels=None):
         if ax == None:
             fig, ax = plt.subplots(1,1)
             self.fig = fig
@@ -187,8 +187,11 @@ class StatisticsModule():
             
         # plot values for each solver
         values = self.get_values_per_solver(statistics_per_n,n_values,statistic)
-        for solver, stat_values in values.items():
-            ax.plot(n_values[0:len(stat_values)],stat_values,label=solver)
+        for i, (solver, stat_values) in enumerate(values.items()):
+            if labels != None:
+                ax.plot(n_values[0:len(stat_values)],stat_values,label=labels[i])
+            else:
+                ax.plot(n_values[0:len(stat_values)],stat_values,label=solver)
 
         # set plot properties
         ax.set_yscale(yscale)
@@ -202,7 +205,7 @@ class StatisticsModule():
             plt.show()
 
     # plots multiple statistics for multiple solvers for multiple n values in a dynamically created grid
-    def plot_multiple_statistics(self,statistics_per_n,n_values,statistics=["runtime"]):
+    def plot_multiple_statistics(self,statistics_per_n,n_values,statistics=["runtime"],labels=None):
         # create grid for plots
         num_plots = len(statistics)
         if num_plots == 1:
@@ -226,10 +229,10 @@ class StatisticsModule():
             row = i // cols
             col = i % cols
             if rows == 1 and cols == 1:
-                    self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs)
+                    self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs,labels=labels)
             elif rows == 1:
-                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[col])
+                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[col],labels=labels)
             else:
-                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[row,col])
+                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[row,col],labels=labels)
         plt.tight_layout()
         plt.show()
