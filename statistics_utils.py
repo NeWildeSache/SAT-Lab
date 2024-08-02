@@ -7,10 +7,12 @@ from tqdm.auto import tqdm
 from IPython.display import clear_output
 from matplotlib import pyplot as plt
 import multiprocessing
+import textwrap
+from matplotlib.axes import Axes
 
 # allows computation and plotting of statistics for multiple solvers
 class StatisticsModule():
-    def __init__(self, k=3, gamma=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=60, use_timeouts=True, averaging_function=np.mean):
+    def __init__(self, k=3, gamma=4.26, seed=100, num_tests=100, print_solving_information=False, print_progress=True, check_correctness=False, formula_creator=random_cnf, timeout_threshold=60, use_timeouts=True, averaging_function=np.mean, plot_size=1):
         self.k = k
         self.gamma = gamma    
         self.seed = seed
@@ -22,6 +24,7 @@ class StatisticsModule():
         self.use_timeouts = use_timeouts
         self.averaging_function = averaging_function
         self.print_progress = print_progress
+        self.plot_size = plot_size
 
     # creates self.num_tests random formulas and solves them with the given solver
     # returns a dictionary with the statistics of the solver ({statistic: [values]})
@@ -167,24 +170,66 @@ class StatisticsModule():
                         values[solver] = []
                     values[solver].append(n_statistics[solver][statistic])
         return values
-    
+
+    # changes title to fit the width of the plot
+    def _dynamic_wrap_title(self, title, ax, char_per_inch):
+        bbox = ax.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        width_inch = bbox.width
+        max_line_length = int(width_inch * char_per_inch)
+        return "\n".join(textwrap.wrap(title, max_line_length))
+
     # plots a statistic for multiple solvers for multiple n values
-    def plot_statistic(self,statistics_per_n,n_values,statistic="runtime",title_addition="",title="",yscale="log"):
+    def plot_statistic(self,statistics_per_n,n_values,statistic="runtime",title_addition="",title="",yscale="log",ax=None):
+        if ax == None:
+            fig, ax = plt.subplots(1,1)
+            self.fig = fig
+        ax: Axes
+            
+        # plot values for each solver
         values = self.get_values_per_solver(statistics_per_n,n_values,statistic)
         for solver, stat_values in values.items():
-            plt.plot(n_values[0:len(stat_values)],stat_values,label=solver)
+            ax.plot(n_values[0:len(stat_values)],stat_values,label=solver)
 
-        plt.yscale(yscale)
-        plt.xlabel("n")
-        plt.ylabel(statistic)
-        plt.legend()
+        # set plot properties
+        ax.set_yscale(yscale)
+        ax.set_xlabel("n")
+        ax.set_ylabel(statistic)
+        ax.legend()
         if title == "":
-            plt.title(statistic + f" per solver for different n (k={self.k}, c={self.gamma}n)" + title_addition)
-        else:
-            plt.title(title)
-        plt.show()
+            title = statistic + f" per solver for different n (k={self.k}, c={self.gamma}n)" + title_addition
+        ax.set_title(self._dynamic_wrap_title(title, ax, 10))
+        if ax == None:
+            plt.show()
 
-    # plots multiple statistics for multiple solvers for multiple n values
+    # plots multiple statistics for multiple solvers for multiple n values in a dynamically created grid
     def plot_multiple_statistics(self,statistics_per_n,n_values,statistics=["runtime"]):
-        for statistic in statistics:
-            self.plot_statistic(statistics_per_n,n_values,statistic)
+        # create grid for plots
+        num_plots = len(statistics)
+        if num_plots == 1:
+            rows = 1
+            cols = 1
+        elif num_plots % 2 == 0:
+            rows = num_plots // 2
+            cols = 2
+        elif num_plots % 3 == 0:
+            rows = num_plots // 3
+            cols = 3
+        elif num_plots % 3 == 2:
+            rows = math.ceil(num_plots / 3)
+            cols = 3
+        else:
+            rows = math.ceil(num_plots / 2)
+            cols = 2
+
+        self.fig, axs = plt.subplots(rows, cols, figsize=(self.plot_size*6.4*cols, self.plot_size*4.8*rows))
+        for i, statistic in enumerate(statistics):
+            row = i // cols
+            col = i % cols
+            if rows == 1 and cols == 1:
+                    self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs)
+            elif rows == 1:
+                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[col])
+            else:
+                self.plot_statistic(statistics_per_n,n_values,statistic,ax=axs[row,col])
+        plt.tight_layout()
+        plt.show()

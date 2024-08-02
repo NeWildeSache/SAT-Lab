@@ -1,10 +1,13 @@
 from solvers.cdcl_decision_heuristics_and_restarts import cdcl_decision_heuristics_and_restarts
 
 class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restarts):
-    def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True, max_lbd=7, max_lbd_multiplier=1.1) -> None:
+    def __init__(self, random_decision_frequency=200, vsids_multiplier=1.05, c=100, use_decision_heuristics=True, use_restarts=True, 
+                 max_lbd=7, max_lbd_multiplier=1.1, use_clause_minimization=True, use_clause_deletion=True) -> None:
         super().__init__(random_decision_frequency, vsids_multiplier, c, use_decision_heuristics, use_restarts)
         self.max_lbd = max_lbd # deletion threshold for learned clauses based on lbd score
         self.max_lbd_multiplier = max_lbd_multiplier # factor to multiply max_lbd with
+        self.use_clause_minimization = use_clause_minimization
+        self.use_clause_deletion = use_clause_deletion
 
     # -> override to add deleted_clause_count
     def reset_variables(self, formula):
@@ -36,7 +39,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     def analyze_conflict(self):
         self.current_conflict_count += 1
         learned_clause, new_decision_level, involved_variables = self.get_learned_clause()
-        learned_clause = self.minimize_learned_clause(learned_clause)
+        if self.use_clause_minimization: learned_clause = self.minimize_learned_clause(learned_clause)
         if len(learned_clause) > 0:
             self.remember_learned_clause(learned_clause)
             self.update_vsids_scores(involved_variables)
@@ -45,7 +48,7 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
     # -> override to also remember lbd score of learned clause 
     def remember_learned_clause(self, learned_clause):
         super().remember_learned_clause(learned_clause)
-        self.lbd_scores.append(self.lbd(learned_clause))
+        if self.use_clause_deletion: self.lbd_scores.append(self.lbd(learned_clause))
     
     # returns lbd score of clause
     def lbd(self,clause):
@@ -79,6 +82,6 @@ class cdcl_clause_minimization_and_deletion(cdcl_decision_heuristics_and_restart
 
     # -> override to add deletion of learned clauses
     def apply_restart(self):
-        self.delete_learned_clauses()
+        if self.use_clause_deletion: self.delete_learned_clauses()
         super().apply_restart()
 

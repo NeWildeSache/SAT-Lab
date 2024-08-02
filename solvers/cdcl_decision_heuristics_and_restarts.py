@@ -78,7 +78,7 @@ class cdcl_decision_heuristics_and_restarts(cdcl_watched_literals):
     # new restart policy: luby restarts
     def apply_restart_policy(self):
         if self.use_restarts:
-            if self.current_conflict_count == self.c * self.current_luby_sequence[self.current_luby_index]:
+            if self.current_conflict_count >= self.c * self.current_luby_sequence[self.current_luby_index]:
                 self.current_conflict_count = 0
                 self.restart_count += 1
                 self.current_luby_index += 1

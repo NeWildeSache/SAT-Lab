@@ -13,9 +13,9 @@ This module contains all solvers and some necessary util functions.
 ### tasks
 This folder contains all the tasks of the different lab sessions.
 
-### benchmarks.ipynb and test_solver.py
+### benchmarks.ipynb and statistics_utils.py
 benchmarks does a statistical analysis of different solvers and therefore fulfills the tasks at the end of every lab session and the lab 11.
-test_solver.py contains a class that facilitates the analyses in the benchmarks notebook.
+statistics_utils.py contains a class that facilitates the analyses in the benchmarks notebook.
 
 ## Getting started
 To run all code, it would be advisable to install a fresh python environment and include all packages specified in the requirements.txt or environment.yml file. This can be automatically done using pip:
