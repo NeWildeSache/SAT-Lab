@@ -76,3 +76,22 @@ class dpll:
     def get_decision_variable(self, assignments):
         possible_variables = [literal for literal in self.literals if literal not in assignments and -literal not in assignments]
         return random.sample(possible_variables, 1)[0]
+
+# run this from parent folder using "python -m solvers.dpll <path>"
+if __name__ == "__main__":
+    import argparse
+    from .utils import read_dimacs
+    parser = argparse.ArgumentParser(description="DPLL SAT Solver")
+    parser.add_argument("path", nargs="?", default="random_cnf.cnf")
+    args=parser.parse_args()
+    path = args.path
+    formula = read_dimacs(path)
+    solver = dpll()
+    stats = solver.solve(formula)
+    print("s", "SATISFIABLE" if stats["SAT"] else "UNSATISFIABLE")
+    if stats["SAT"]:
+        print("v", " ".join([str(l) for l in stats["model"]]))
+    print("c", "Runtime:", stats["runtime"])
+    print("c", "Number of Propagations:", stats["propagation_count"])
+    print("c", "Number of Pure Literal Eliminations:", stats["pure_literal_elimination_count"])
+    print("c", "Number of Decisions:", stats["decision_count"])

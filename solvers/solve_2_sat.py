@@ -1,8 +1,6 @@
 from .unit_propagate import unit_propagate, simplify
-from .utils import read_dimacs
 import copy
 import time
-import argparse
 
 def solve_2_sat(formula):
     time_start = time.time()
@@ -46,6 +44,8 @@ def solve_2_sat(formula):
 
 # run this from parent folder using "python -m solvers.solve_2_sat <path>"
 if __name__ == "__main__":
+    import argparse
+    from .utils import read_dimacs
     parser = argparse.ArgumentParser(description="2-SAT Solver")
     parser.add_argument("path", nargs="?", default="random_cnf.cnf")
     args=parser.parse_args()

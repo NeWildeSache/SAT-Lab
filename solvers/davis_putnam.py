@@ -1,7 +1,6 @@
 from solvers.unit_propagate import unit_propagate
-from solvers.utils import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination, read_dimacs
+from solvers.utils import remove_doubles, remove_tautologies, subsumption, pure_literal_elimination
 import time
-import argparse
 
 def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_elimination=True, use_subsumption=True, use_tautology_elimination=True, use_double_elimination=True):
     time_start = time.time()
@@ -70,6 +69,8 @@ def davis_putnam(formula, use_unit_propagation=True, use_pure_literal_eliminatio
 
 # run this from parent folder using "python -m solvers.davis_putnam <path>"
 if __name__ == "__main__":
+    import argparse
+    from .utils import read_dimacs
     parser = argparse.ArgumentParser(description="Davis Putnam SAT Solver")
     parser.add_argument("path", nargs="?", default="random_cnf.cnf")
     args=parser.parse_args()

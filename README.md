@@ -26,6 +26,10 @@ or using conda:
 
     conda env create -f environment.yml
 
+To run most scripts from the command line, you have to use following command structure because they are within python modules:
+
+    python -m <module_name>.<file_name> <arguments>
+
 ## Questions
 
 For further questions or suggestions please contact the repository owner via GitHub([NeWildeSache](https://github.com/NeWildeSache)) or mail: dominic.wild@uni-jena.de

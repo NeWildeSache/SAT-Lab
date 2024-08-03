@@ -102,3 +102,25 @@ class cdcl_clause_learning(cdcl):
         return new_decision_level
 
 
+# run this from parent folder using "python -m solvers.cdcl_clause_learning <path>"
+if __name__ == "__main__":
+    import argparse
+    from .utils import read_dimacs
+    parser = argparse.ArgumentParser(description="CDCL SAT Solver with Clause Learning")
+    parser.add_argument("path", nargs="?", default="random_cnf.cnf")
+    args=parser.parse_args()
+    path = args.path
+    formula = read_dimacs(path)
+    solver = cdcl_clause_learning()
+    stats = solver.solve(formula)
+    print("s", "SATISFIABLE" if stats["SAT"] else "UNSATISFIABLE")
+    if stats["SAT"]:
+        print("v", " ".join([str(l) for l in stats["model"]]))
+    print("c", "Runtime:", stats["runtime"])
+    print("c", "Number of Decisions:", stats["decision_count"])
+    print("c", "Number of Propagations:", stats["propagation_count"])
+    print("c", "Number of Conflicts:", stats["conflict_count"])
+    print("c", "Number of Learned Clauses:", stats["learned_clause_count"])
+    print("c", "Number of Restarts:", stats["restart_count"])
+    print("c", "Number of Deleted Clauses:", stats["deleted_clause_count"])
+    print("c", "Number of Minimized Clauses:", stats["minimized_clause_count"])
